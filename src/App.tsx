@@ -1,0 +1,2080 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import Cropper from 'react-easy-crop';
+import localforage from 'localforage';
+import { motion, AnimatePresence, useScroll, useTransform, useInView, useMotionValue, useSpring } from 'motion/react';
+import confetti from 'canvas-confetti';
+import {
+  Heart,
+  MapPin,
+  Calendar,
+  Clock,
+  Music,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Church,
+  Flame,
+  Mail,
+  Phone,
+  Info,
+  Share2,
+  Volume2,
+  VolumeX,
+  Flower,
+  ChevronRight,
+  Sparkles,
+  Star,
+  Lock,
+  Trash2,
+  Settings,
+  Plus,
+  UploadCloud,
+  Instagram
+} from 'lucide-react';
+
+import HorizonSvg from './components/HorizonSvg';
+import FaithDivider from './components/FaithDivider';
+import AtmosphericParticles from './components/AtmosphericParticles';
+import OmIcon from './components/OmIcon';
+
+// --- Cursor Sparkle Trail Component ---
+const CursorSparkleTrail = () => {
+  const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; size: number }[]>([]);
+  const idRef = useRef(0);
+  const lastPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let isMobile = 'ontouchstart' in window;
+    if (isMobile) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - lastPos.current.x;
+      const dy = e.clientY - lastPos.current.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 30) return;
+      lastPos.current = { x: e.clientX, y: e.clientY };
+
+      const newSparkle = {
+        id: idRef.current++,
+        x: e.clientX + (Math.random() - 0.5) * 20,
+        y: e.clientY + (Math.random() - 0.5) * 20,
+        size: 4 + Math.random() * 8
+      };
+      setSparkles(prev => [...prev.slice(-8), newSparkle]);
+      setTimeout(() => {
+        setSparkles(prev => prev.filter(s => s.id !== newSparkle.id));
+      }, 800);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return (
+    <>
+      {sparkles.map(s => (
+        <motion.div
+          key={s.id}
+          initial={{ opacity: 1, scale: 1, x: s.x, y: s.y }}
+          animate={{ opacity: 0, scale: 0, y: s.y - 40 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="cursor-sparkle"
+          style={{ width: s.size, height: s.size, left: 0, top: 0, position: 'fixed' }}
+        />
+      ))}
+    </>
+  );
+};
+
+// --- Wave Section Divider ---
+const WaveDivider = ({ flip = false, fromColor = '#FDF9FF', toColor = '#2D1126' }: { flip?: boolean; fromColor?: string; toColor?: string }) => (
+  <div className={`wave-divider ${flip ? 'rotate-180' : ''}`} style={{ backgroundColor: toColor }}>
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path
+        d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
+        fill={fromColor}
+        opacity=".8"
+      />
+      <path
+        d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z"
+        fill={fromColor}
+        opacity=".5"
+      />
+      <path
+        d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"
+        fill={fromColor}
+      />
+    </svg>
+  </div>
+);
+
+// --- Magical Dust Animation Component ---
+const MagicalDustAnimation = () => {
+  const [particles, setParticles] = useState<{ id: number; left: string; delay: string; duration: string; size: string; type: 'sparkle' | 'star' | 'dust' | 'heart' }[]>([]);
+
+  useEffect(() => {
+    const initialParticles = Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 12}s`,
+      duration: `${12 + Math.random() * 18}s`,
+      size: `${8 + Math.random() * 18}px`,
+      type: (i % 4 === 0 ? 'sparkle' : (i % 4 === 1 ? 'star' : (i % 4 === 2 ? 'heart' : 'dust'))) as 'sparkle' | 'star' | 'dust' | 'heart'
+    }));
+    setParticles(initialParticles);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[40] overflow-hidden">
+      {particles.map((p) => {
+        if (p.type === 'dust') {
+          return <div key={p.id} className="dust-particle" style={{ left: p.left, top: `${Math.random() * 100}%`, width: p.size, height: p.size, animationDelay: p.delay, animationDuration: p.duration }} />;
+        }
+        return (
+          <motion.div
+            key={p.id}
+            initial={{ y: -100, opacity: 0, rotate: 0 }}
+            animate={{
+              y: ['0vh', '110vh'],
+              opacity: [0, 0.7, 0.7, 0],
+              rotate: [0, p.type === 'heart' ? 720 : 360],
+              x: p.type === 'heart' ? [0, 30, -20, 10, 0] : undefined
+            }}
+            transition={{
+              duration: parseFloat(p.duration),
+              repeat: Infinity,
+              delay: parseFloat(p.delay),
+              ease: "linear"
+            }}
+            className="absolute"
+            style={{
+              left: p.left,
+              width: p.size,
+              height: p.size,
+              color: p.type === 'heart' ? 'rgba(212, 169, 100,0.3)' : '#D4AF37',
+              filter: `drop-shadow(0 0 ${p.type === 'heart' ? '8' : '5'}px rgba(212, 169, 100,0.6))`
+            }}
+          >
+            {p.type === 'sparkle' ? <Sparkles size={parseFloat(p.size)} /> :
+              p.type === 'heart' ? <Heart fill="currentColor" size={parseFloat(p.size)} /> :
+                <Star fill="#D4AF37" size={parseFloat(p.size)} />}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
+// --- Music Toggle Component ---
+const MusicToggle = ({ isPlaying, onToggle }: { isPlaying: boolean; onToggle: () => void }) => {
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.1, rotate: 5 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={onToggle}
+      className="fixed bottom-8 left-8 z-[90] clay-button-gold p-4 shadow-2xl hover:bg-accent-light transition-all group"
+      title={isPlaying ? "Pause Music" : "Play Music"}
+    >
+      {isPlaying ? (
+        <Volume2 size={24} className="animate-pulse group-hover:scale-110 transition-transform" />
+      ) : (
+        <VolumeX size={24} className="group-hover:scale-110 transition-transform" />
+      )}
+    </motion.button>
+  );
+};
+
+
+const TimeUnit = ({ value, label, index, light = false }: { value: number; label: string; index: number; light?: boolean }) => (
+  <>
+    {index > 0 && <div className="countdown-divider"></div>}
+    <div className="countdown-unit">
+      <span className={`countdown-number ${light ? 'countdown-number-light' : ''}`}>
+        {value.toString().padStart(2, '0')}
+      </span>
+      <span className={`countdown-label ${light ? 'countdown-label-light' : ''}`}>
+        {label}
+      </span>
+    </div>
+  </>
+);
+
+// --- Countdown Timer Component ---
+const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    };
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft();
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      className="countdown-plaque mt-10 mb-8"
+    >
+      <TimeUnit value={timeLeft.days} label="Days" index={0} />
+      <TimeUnit value={timeLeft.hours} label="Hours" index={1} />
+      <TimeUnit value={timeLeft.minutes} label="Mins" index={2} />
+      <TimeUnit value={timeLeft.seconds} label="Secs" index={3} />
+    </motion.div>
+  );
+};
+
+const CountdownTimerLight = ({ targetDate }: { targetDate: string }) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    };
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft();
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return (
+    <div className="countdown-plaque countdown-plaque-light mt-6 mb-2">
+      <TimeUnit value={timeLeft.days} label="Days" index={0} light />
+      <TimeUnit value={timeLeft.hours} label="Hours" index={1} light />
+      <TimeUnit value={timeLeft.minutes} label="Mins" index={2} light />
+      <TimeUnit value={timeLeft.seconds} label="Secs" index={3} light />
+    </div>
+  );
+};
+
+const SuccessToast = ({ message, isVisible, onClose }: { message: string; isVisible: boolean; onClose: () => void }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(onClose, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: 50, x: '-50%' }}
+          animate={{ opacity: 1, y: 0, x: '-50%' }}
+          exit={{ opacity: 0, y: 50, x: '-50%' }}
+          className="fixed bottom-10 left-1/2 z-[100] clay-card-gold px-8 py-4 flex items-center gap-3 border border-accent-gold/30"
+        >
+          <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center text-green-600">
+            <CheckCircle2 size={20} />
+          </div>
+          <p className="text-purple-dark font-bold font-display">{message}</p>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+const RSVPModal = ({
+  isOpen,
+  onClose,
+  setToastMessage,
+  setIsToastVisible
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  setToastMessage: (msg: string) => void;
+  setIsToastVisible: (visible: boolean) => void;
+}) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    mobile: '',
+    guests: '1',
+    attendance: 'yes',
+    mealPreference: 'Standard',
+    allergies: '',
+    message: ''
+  });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    try {
+      const response = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        try {
+          const savedRsvps = JSON.parse(localStorage.getItem('wedding_rsvps') || '[]');
+          savedRsvps.unshift({ ...formData, timestamp: new Date().toISOString() });
+          localStorage.setItem('wedding_rsvps', JSON.stringify(savedRsvps));
+        } catch (e) {
+          console.error('Failed to save RSVP to local storage');
+        }
+
+        setStatus('success');
+        setToastMessage('RSVP submitted successfully!');
+        setIsToastVisible(true);
+        setTimeout(() => {
+          onClose();
+          setStatus('idle');
+          setFormData({ name: '', mobile: '', guests: '1', attendance: 'yes', mealPreference: 'Standard', allergies: '', message: '' });
+        }, 3000);
+      } else {
+        setStatus('error');
+      }
+    } catch (error) {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-purple-dark/80 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="clay-card-gold text-purple-dark w-full max-w-md md:max-w-lg max-h-[90vh] flex flex-col shadow-2xl border-4 border-accent-gold/20"
+          >
+            <div className="p-4 sm:p-6 md:p-8 flex flex-col h-full overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl md:text-3xl font-display font-bold">RSVP</h2>
+                <button onClick={onClose} className="text-purple-light hover:text-purple-deep transition-colors">
+                  <XCircle size={28} className="md:w-8 md:h-8" />
+                </button>
+              </div>
+
+              {status === 'success' ? (
+                <div className="text-center py-12">
+                  <CheckCircle2 className="mx-auto text-green-600 mb-4" size={64} />
+                  <h3 className="text-2xl font-bold mb-2">Thank You!</h3>
+                  <p>Your response has been recorded.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Full Name</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full px-4 py-2 rounded-xl bg-cream-gold border-2 border-accent-light/50 focus:border-accent-gold outline-none transition-all shadow-inner"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Mobile Number</label>
+                    <input
+                      required
+                      type="tel"
+                      className="w-full px-4 py-2 rounded-xl bg-cream-gold border-2 border-accent-light/50 focus:border-accent-gold outline-none transition-all shadow-inner"
+                      value={formData.mobile}
+                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">No. of Guests</label>
+                      <select
+                        className="w-full px-4 py-2 rounded-xl bg-cream-gold border-2 border-accent-light/50 focus:border-accent-gold outline-none transition-all shadow-inner"
+                        value={formData.guests}
+                        onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
+                      >
+                        {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Attendance</label>
+                      <select
+                        className="w-full px-4 py-2 rounded-xl bg-cream-gold border-2 border-accent-light/50 focus:border-accent-gold outline-none transition-all shadow-inner"
+                        value={formData.attendance}
+                        onChange={(e) => setFormData({ ...formData, attendance: e.target.value })}
+                      >
+                        <option value="yes">Joyfully Attend</option>
+                        <option value="no">Regretfully Decline</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {formData.attendance === 'yes' && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden space-y-4"
+                      >
+                        {/* Removed Meal Preference & Dietary sections as requested */}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="relative">
+                    <label className="block text-sm font-semibold mb-1 text-purple-dark/80">Message (Optional)</label>
+                    <textarea
+                      rows={3}
+                      maxLength={300}
+                      className="w-full px-4 py-2 rounded-xl bg-cream-gold border-2 border-accent-light/50 focus:border-accent-gold outline-none transition-all resize-none shadow-inner"
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    />
+                    <div className="absolute bottom-2 right-4 text-[10px] font-bold tracking-widest text-purple-light/40">
+                      {formData.message.length} / 300
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={status === 'loading'}
+                    type="submit"
+                    className="w-full clay-button bg-purple-deep text-cream-gold py-3 font-bold hover:bg-purple-light transition-all disabled:opacity-50"
+                  >
+                    {status === 'loading' ? 'Sending...' : 'Submit Response'}
+                  </motion.button>
+                  {status === 'error' && (
+                    <p className="text-red-600 text-center text-sm">Something went wrong. Please try again.</p>
+                  )}
+                </form>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+
+// --- Scroll To Top Component ---
+const ScrollToTop = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      if (window.pageYOffset > window.innerHeight) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.5, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.5, y: 20 }}
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-[90] clay-button-gold p-4 shadow-2xl hover:bg-accent-light transition-all group"
+        >
+          <ChevronUp size={24} className="group-hover:-translate-y-1 transition-transform" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// --- Lightbox Modal Component ---
+const LightboxModal = ({ isOpen, imageSrc, onClose }: { isOpen: boolean; imageSrc: string | null; onClose: () => void }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && imageSrc && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-purple-dark/95 backdrop-blur-xl p-4 md:p-8 cursor-zoom-out"
+        >
+          <div className="absolute top-6 right-6 z-50">
+            <button
+              onClick={onClose}
+              className="text-cream-gold hover:text-accent-gold transition-colors bg-purple-deep/50 p-2 rounded-full backdrop-blur-sm"
+            >
+              <XCircle size={36} />
+            </button>
+          </div>
+          <motion.img
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            src={imageSrc}
+            alt="Enlarged gallery view"
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-accent-gold/20"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image itself
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// --- Crop Helper ---
+const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.src = imageSrc;
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = pixelCrop.width;
+      canvas.height = pixelCrop.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject();
+      ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        pixelCrop.width,
+        pixelCrop.height
+      );
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    image.onerror = reject;
+  });
+};
+
+// --- Admin Modal Component ---
+const AdminModal = ({
+  isOpen,
+  onClose,
+  songUrl,
+  setSongUrl,
+  galleryImages,
+  setGalleryImages,
+  setToastMessage,
+  setIsToastVisible,
+  guestMessages,
+  setGuestMessages,
+  groomImage,
+  setGroomImage,
+  brideImage,
+  setBrideImage
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  songUrl: string;
+  setSongUrl: (url: string) => void;
+  galleryImages: string[];
+  setGalleryImages: (imgs: string[]) => void;
+  setToastMessage: (msg: string) => void;
+  setIsToastVisible: (v: boolean) => void;
+  guestMessages: any[];
+  setGuestMessages: (msgs: any[]) => void;
+  groomImage: string;
+  setGroomImage: (img: string) => void;
+  brideImage: string;
+  setBrideImage: (img: string) => void;
+}) => {
+  const [pin, setPin] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [newImage, setNewImage] = useState('');
+  const [newSong, setNewSong] = useState(songUrl);
+  const [rsvps, setRsvps] = useState<any[]>([]);
+
+  // Crop states
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropTarget, setCropTarget] = useState<'groom' | 'bride'>('groom');
+  const [cropImageRaw, setCropImageRaw] = useState('');
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+  const initCrop = (type: 'groom' | 'bride') => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setCropImageRaw(ev.target?.result as string);
+          setCropTarget(type);
+          setCropModalOpen(true);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const finalizeCrop = async () => {
+    try {
+      const croppedImgBase64 = await getCroppedImg(cropImageRaw, croppedAreaPixels);
+      if (cropTarget === 'groom') {
+        localStorage.setItem('wedding_groom_image', croppedImgBase64);
+        setGroomImage(croppedImgBase64);
+      } else {
+        localStorage.setItem('wedding_bride_image', croppedImgBase64);
+        setBrideImage(croppedImgBase64);
+      }
+      setToastMessage('Profile photo updated!');
+      setIsToastVisible(true);
+      setCropModalOpen(false);
+    } catch (e) {
+      setToastMessage('Failed to crop image');
+      setIsToastVisible(true);
+      setCropModalOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchAdminData = async () => {
+        try {
+          // Fetch RSVPs from server
+          const response = await fetch('/api/rsvps');
+          if (response.ok) {
+            const serverRsvps = await response.json();
+            setRsvps(serverRsvps);
+          } else {
+            // Fallback to local storage if server fails
+            const savedRsvps = JSON.parse(localStorage.getItem('wedding_rsvps') || '[]');
+            setRsvps(savedRsvps);
+          }
+        } catch (e) {
+          const savedRsvps = JSON.parse(localStorage.getItem('wedding_rsvps') || '[]');
+          setRsvps(savedRsvps);
+        }
+      };
+      fetchAdminData();
+    }
+  }, [isAuthenticated]);
+
+  if (!isOpen) return null;
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin === 'KN2026') {
+      setIsAuthenticated(true);
+      setToastMessage('Access Granted');
+      setIsToastVisible(true);
+    } else {
+      setToastMessage('Incorrect Password');
+      setIsToastVisible(true);
+    }
+  };
+
+  const saveConfig = async () => {
+    localStorage.setItem('wedding_song', newSong);
+    await localforage.removeItem('wedding_song_blob');
+    setSongUrl(newSong);
+    setToastMessage('Settings Saved!');
+    setIsToastVisible(true);
+  };
+
+  const addImage = () => {
+    if (!newImage) return;
+    const updated = [...galleryImages, newImage];
+    setGalleryImages(updated);
+    localStorage.setItem('wedding_gallery', JSON.stringify(updated));
+    setNewImage('');
+    setToastMessage('Image Added');
+    setIsToastVisible(true);
+  };
+
+  const processFile = (file: File) => {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const max_size = 800;
+
+        if (width > height) {
+          if (width > max_size) {
+            height *= max_size / width;
+            width = max_size;
+          }
+        } else {
+          if (height > max_size) {
+            width *= max_size / height;
+            height = max_size;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          const updated = [...galleryImages, dataUrl];
+          try {
+            localStorage.setItem('wedding_gallery', JSON.stringify(updated));
+            setGalleryImages(updated);
+            setToastMessage('Image Uploaded & Saved!');
+            setIsToastVisible(true);
+          } catch (err) {
+            setToastMessage('Storage Full! Remove some old images first.');
+            setIsToastVisible(true);
+          }
+        }
+      };
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const processAudioFile = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      setToastMessage('Please upload an audio file');
+      setIsToastVisible(true);
+      return;
+    }
+
+    try {
+      setToastMessage('Processing audio...');
+      setIsToastVisible(true);
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const audioData = e.target?.result as string;
+        await localforage.setItem('wedding_song_blob', audioData);
+        setSongUrl(audioData);
+        setNewSong('Local Uploaded File');
+        setToastMessage('Audio Uploaded & Saved!');
+        setIsToastVisible(true);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setToastMessage('Error saving audio file');
+      setIsToastVisible(true);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const updated = galleryImages.filter((_, i) => i !== index);
+    setGalleryImages(updated);
+    localStorage.setItem('wedding_gallery', JSON.stringify(updated));
+  };
+
+  const clearGuestbook = () => {
+    if (window.confirm('Are you sure you want to delete all messages?')) {
+      localStorage.setItem('guestbook_messages', JSON.stringify([]));
+      setGuestMessages([]);
+      setToastMessage('Guestbook Cleared');
+      setIsToastVisible(true);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-purple-dark/90 backdrop-blur-sm">
+      <div className="clay-card-gold text-purple-dark w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
+        <div className="flex justify-between items-center p-4 md:p-6 border-b border-accent-gold/20">
+          <h2 className="text-xl md:text-2xl font-display font-bold flex items-center gap-2">
+            <Lock size={20} /> Admin Access
+          </h2>
+          <button onClick={onClose} className="text-purple-light hover:text-purple-deep">
+            <XCircle size={24} />
+          </button>
+        </div>
+
+        <div className="p-4 md:p-6 overflow-y-auto w-full">
+          {!isAuthenticated ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <p className="text-sm font-semibold">Enter Password</p>
+              <input
+                type="password"
+                className="w-full px-4 py-3 rounded-xl bg-cream-gold border-2 border-accent-light/50 focus:border-accent-gold outline-none"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                placeholder="********"
+              />
+              <button className="w-full clay-button bg-purple-deep text-cream-gold py-3 font-bold">Login</button>
+            </form>
+          ) : (
+            <div className="space-y-6 w-full">
+              <div className="space-y-3">
+                <label className="text-sm font-bold block">Background Music (.mp3)</label>
+
+                <div
+                  className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer hover:bg-accent-gold/5 transition-colors relative"
+                  onClick={() => document.getElementById('audio-upload')?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) processAudioFile(file);
+                  }}
+                >
+                  <input
+                    type="file"
+                    id="audio-upload"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) processAudioFile(file);
+                      if (e.target) e.target.value = '';
+                    }}
+                  />
+                  <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
+                  <p className="text-xs font-semibold text-purple-dark/80">Click to upload or drag & drop MP3</p>
+                  <p className="text-[10px] text-purple-dark/50">Your personal wedding song</p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-purple-dark/30 font-bold justify-center py-1">
+                  <div className="h-[1px] bg-accent-gold/20 flex-1"></div>
+                  OR URL
+                  <div className="h-[1px] bg-accent-gold/20 flex-1"></div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    className="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-accent-gold/30 bg-white"
+                    value={newSong === 'Local Uploaded File' ? '' : newSong}
+                    onChange={(e) => setNewSong(e.target.value)}
+                    placeholder="https://...mp3"
+                  />
+                  <button onClick={saveConfig} className="bg-purple-deep text-cream-gold px-4 py-2 rounded-lg text-sm font-bold w-full sm:w-auto">Save URL</button>
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-accent-gold/20 pt-4">
+                <label className="text-sm font-bold block">Profile Photos (Hero Section)</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center bg-purple-light/10 p-3 rounded-lg border border-accent-gold/20">
+                    <img src={groomImage} className="w-16 h-16 rounded-full mx-auto object-cover mb-2 border-2 border-accent-gold" />
+                    <button onClick={() => initCrop('groom')} className="text-xs bg-purple-deep hover:bg-purple-light text-cream-gold px-3 py-2 rounded-lg w-full font-bold transition-colors">Edit Groom</button>
+                  </div>
+                  <div className="text-center bg-purple-light/10 p-3 rounded-lg border border-accent-gold/20">
+                    <img src={brideImage} className="w-16 h-16 rounded-full mx-auto object-cover mb-2 border-2 border-accent-gold" />
+                    <button onClick={() => initCrop('bride')} className="text-xs bg-purple-deep hover:bg-purple-light text-cream-gold px-3 py-2 rounded-lg w-full font-bold transition-colors">Edit Bride</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-accent-gold/20 pt-4">
+                <label className="text-sm font-bold block">Add Gallery Image</label>
+
+                <div
+                  className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer hover:bg-accent-gold/5 transition-colors relative"
+                  onClick={() => document.getElementById('gallery-upload')?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) processFile(file);
+                  }}
+                >
+                  <input
+                    type="file"
+                    id="gallery-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) processFile(file);
+                      if (e.target) e.target.value = '';
+                    }}
+                  />
+                  <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
+                  <p className="text-xs font-semibold text-purple-dark/80">Click to upload or drag & drop</p>
+                  <p className="text-[10px] text-purple-dark/50">Any image up to 5MB (auto-compressed)</p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-purple-dark/30 font-bold justify-center py-1">
+                  <div className="h-[1px] bg-accent-gold/20 flex-1"></div>
+                  OR URL
+                  <div className="h-[1px] bg-accent-gold/20 flex-1"></div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-accent-gold/30 bg-white"
+                    value={newImage}
+                    onChange={(e) => setNewImage(e.target.value)}
+                    placeholder="https://... or /image.jpg"
+                  />
+                  <button onClick={addImage} className="bg-green-600 text-white px-3 py-2 rounded-lg shrink-0"><Plus size={18} /></button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4 max-h-40 overflow-y-auto pr-2 pb-2">
+                  {galleryImages.map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-md overflow-hidden group">
+                      <img src={img} alt="" className="w-full h-full object-cover bg-gray-200" />
+                      <button onClick={() => removeImage(i)} className="absolute inset-0 bg-red-600/50 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-white transition-opacity">
+                        <Trash2 size={24} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-accent-gold/20 pt-4">
+                <button onClick={clearGuestbook} className="w-full py-3 bg-red-100 text-red-600 border border-red-200 rounded-lg text-sm font-bold flex justify-center items-center gap-2 mb-4">
+                  <Trash2 size={18} /> Clear Guestbook ({guestMessages.length})
+                </button>
+                <button onClick={() => {
+                  if (window.confirm('Are you sure you want to delete all RSVPs?')) {
+                    localStorage.setItem('wedding_rsvps', JSON.stringify([]));
+                    setRsvps([]);
+                    setToastMessage('RSVPs Cleared');
+                    setIsToastVisible(true);
+                  }
+                }} className="w-full py-3 bg-red-100/50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-sm font-bold flex justify-center items-center gap-2">
+                  <Trash2 size={18} /> Clear All RSVPs ({rsvps.length})
+                </button>
+              </div>
+
+              <div className="border-t border-accent-gold/20 pt-4 pb-2">
+                <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><CheckCircle2 size={16} className="text-green-600" /> RSVP List ({rsvps.length})</h3>
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                  {rsvps.length === 0 ? (
+                    <p className="text-xs text-center text-purple-dark/50 py-4">No RSVPs received yet</p>
+                  ) : (
+                    rsvps.map((rsvp: any, i: number) => (
+                      <div key={i} className="bg-purple-light/20 p-3 rounded-lg border border-accent-gold/20 text-sm">
+                        <div className="flex justify-between items-start font-bold">
+                          <span>{rsvp.name} <span className="text-xs font-normal opacity-70">({rsvp.guests} guests)</span></span>
+                          <span className={(rsvp.attendance === 'yes' || rsvp.attending === true) ? 'text-green-600' : 'text-red-500'}>
+                            {(rsvp.attendance === 'yes' || rsvp.attending === true) ? 'Attending' : 'Declined'}
+                          </span>
+                        </div>
+                        {rsvp.mobile && <div className="text-xs text-purple-dark/70 mt-1">{rsvp.mobile}</div>}
+                        {rsvp.message && (
+                          <div className="text-xs mt-2 italic bg-white/50 p-2 rounded border border-purple-light/30">"{rsvp.message}"</div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {cropModalOpen && (
+        <div className="fixed inset-0 z-[300] bg-purple-dark/95 flex flex-col justify-center items-center p-4">
+          <div className="w-full max-w-sm h-[400px] relative bg-black/50 overflow-hidden mb-4 rounded-xl border border-accent-gold shadow-2xl">
+            <Cropper
+              image={cropImageRaw}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+            />
+          </div>
+          <div className="w-full max-w-sm mb-6 bg-purple-light/20 p-4 rounded-xl border border-accent-gold/30">
+            <label className="text-cream-gold text-xs mb-2 font-bold block flex justify-between">
+              <span>Zoom</span>
+              <span>{Math.round(zoom * 100)}%</span>
+            </label>
+            <input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-full accent-accent-gold" />
+          </div>
+          <div className="flex gap-4 w-full max-w-sm">
+            <button onClick={() => setCropModalOpen(false)} className="flex-1 py-3 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-bold transition-colors">Cancel</button>
+            <button onClick={finalizeCrop} className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold transition-colors">Crop & Save</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Main App Component ---
+export default function App() {
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [songUrl, setSongUrl] = useState('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [isRSVPOpen, setIsRSVPOpen] = useState(false);
+  const [isInvitationOpened, setIsInvitationOpened] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showAllMessages, setShowAllMessages] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isToastVisible, setIsToastVisible] = useState(false);
+  const [guestMessages, setGuestMessages] = useState<{ name: string; message: string; timestamp: string }[]>([]);
+  const [guestName, setGuestName] = useState('');
+  const [guestMessage, setGuestMessage] = useState('');
+  const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [groomImage, setGroomImage] = useState('https://picsum.photos/seed/groom/400/400');
+  const [brideImage, setBrideImage] = useState('https://picsum.photos/seed/bride/400/400');
+
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.1], [1, 0.9]);
+
+  useEffect(() => {
+    const loadSavedData = async () => {
+      const savedSongBlob = await localforage.getItem('wedding_song_blob');
+      const savedSongUrl = localStorage.getItem('wedding_song');
+
+      if (savedSongBlob) {
+        setSongUrl(savedSongBlob as string);
+      } else if (savedSongUrl) {
+        setSongUrl(savedSongUrl);
+      }
+
+      const savedGroom = localStorage.getItem('wedding_groom_image');
+      if (savedGroom) setGroomImage(savedGroom);
+
+      const savedBride = localStorage.getItem('wedding_bride_image');
+      if (savedBride) setBrideImage(savedBride);
+
+      const savedImages = localStorage.getItem('wedding_gallery');
+      if (savedImages) {
+        setGalleryImages(JSON.parse(savedImages));
+      } else {
+        setGalleryImages([
+          'https://picsum.photos/seed/wedding-1/800/800',
+          'https://picsum.photos/seed/wedding-2/800/800',
+          'https://picsum.photos/seed/wedding-3/800/800',
+          'https://picsum.photos/seed/wedding-4/800/800',
+          'https://picsum.photos/seed/wedding-5/800/800',
+          'https://picsum.photos/seed/wedding-6/800/800',
+          'https://picsum.photos/seed/wedding-7/800/800',
+          'https://picsum.photos/seed/wedding-8/800/800'
+        ]);
+      }
+
+      fetchGuestMessages();
+
+      // Set initial audio volume
+      if (audioRef.current) {
+        audioRef.current.volume = 0.3;
+      }
+    };
+
+    loadSavedData();
+  }, []);
+
+  const toggleMusic = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(e => console.log("Audio play blocked:", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const fetchGuestMessages = async () => {
+    try {
+      const savedMessages = localStorage.getItem('guestbook_messages');
+      if (savedMessages) {
+        setGuestMessages(JSON.parse(savedMessages));
+      }
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+    }
+  };
+
+  const handleGuestBookSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const newMessage = {
+        name: guestName,
+        message: guestMessage,
+        timestamp: new Date().toISOString()
+      };
+      const updatedMessages = [newMessage, ...guestMessages];
+      setGuestMessages(updatedMessages);
+      localStorage.setItem('guestbook_messages', JSON.stringify(updatedMessages));
+
+      setGuestName('');
+      setGuestMessage('');
+      setToastMessage('Message posted! Thank you for your blessings.');
+      setIsToastVisible(true);
+    } catch (error) {
+      console.error('Failed to post message:', error);
+    }
+  };
+
+  const playBells = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(e => console.log("Audio play blocked:", e));
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Karan & Nancy Wedding Invitation',
+      text: 'Join us in celebrating the sacred union of Karan & Nancy!',
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Share failed:', err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert('Invitation link copied to clipboard!');
+    }
+  };
+
+  const handleOpenInvitation = () => {
+    setIsInvitationOpened(true);
+    setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+    }
+
+    // Trigger red and gold confetti
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+    const colors = ['#ff0000', '#ffd700'];
+
+    (function frame() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.8 },
+        colors: colors
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.8 },
+        colors: colors
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    }());
+  };
+
+  const cardX = useMotionValue(0);
+  const cardY = useMotionValue(0);
+  const springX = useSpring(cardX, { stiffness: 100, damping: 30 });
+  const springY = useSpring(cardY, { stiffness: 100, damping: 30 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    cardX.set(x * 20);
+    cardY.set(y * -20);
+  };
+
+  const handleMouseLeave = () => {
+    cardX.set(0);
+    cardY.set(0);
+  };
+
+  return (
+    <div className="min-h-screen bg-purple-dark font-sans selection:bg-accent-gold selection:text-purple-dark overflow-x-hidden">
+      <AnimatePresence>
+        {!isInvitationOpened && (
+          <motion.div
+            key="invitation-overlay"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[100] bg-purple-dark flex flex-col items-center justify-center p-4 overflow-hidden"
+          >
+            {/* Aurora Animated Background */}
+            <div className="absolute inset-0 bg-aurora"></div>
+            {/* Mesh overlay */}
+            <div className="absolute inset-0 mesh-bg"></div>
+            {/* Elegant Atmospheric Lighting */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-accent-gold/15 via-transparent to-transparent"></div>
+            {/* Decorative corner ornaments */}
+            <div className="absolute top-8 left-8 w-24 h-24 border-l-2 border-t-2 border-accent-gold/20 rounded-tl-xl"></div>
+            <div className="absolute top-8 right-8 w-24 h-24 border-r-2 border-t-2 border-accent-gold/20 rounded-tr-xl"></div>
+            <div className="absolute bottom-8 left-8 w-24 h-24 border-l-2 border-b-2 border-accent-gold/20 rounded-bl-xl"></div>
+            <div className="absolute bottom-8 right-8 w-24 h-24 border-r-2 border-b-2 border-accent-gold/20 rounded-br-xl"></div>
+            {/* Floating orbs */}
+            <motion.div
+              animate={{ x: [0, 100, -50, 0], y: [0, -80, 50, 0], scale: [1, 1.3, 0.9, 1] }}
+              transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-1/4 left-1/4 w-64 h-64 bg-accent-gold/8 rounded-full blur-[100px]"
+            ></motion.div>
+            <motion.div
+              animate={{ x: [0, -80, 60, 0], y: [0, 60, -70, 0], scale: [1, 0.8, 1.2, 1] }}
+              transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-light/15 rounded-full blur-[120px]"
+            ></motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+              className="text-center relative z-10 flex flex-col items-center"
+            >
+              <div className="mb-16 relative incline-block">
+                {/* Glowing Wax Seal Container */}
+                <motion.div
+                  whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(212, 169, 100,0.6)" }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleOpenInvitation}
+                  className="wax-seal w-48 h-48 md:w-64 md:h-64 flex flex-col items-center justify-center p-4 cursor-pointer z-20 mx-auto"
+                >
+                  <div className="w-full h-full border-2 border-dashed border-white/40 rounded-full flex flex-col items-center justify-center">
+                    <h1 className="text-5xl md:text-7xl font-display text-white mb-2 drop-shadow-md">K & N</h1>
+                    <p className="text-white/80 text-[10px] md:text-xs tracking-[0.4em] uppercase font-bold">Open</p>
+                  </div>
+                </motion.div>
+
+                {/* Circular Calligraphy Text (Simulated) */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 -m-12 border border-accent-gold/20 rounded-full flex items-center justify-center z-10 pointer-events-none"
+                >
+                  <Sparkles className="absolute -top-4 text-accent-gold/50 animate-pulse" size={32} />
+                  <Sparkles className="absolute -bottom-4 text-accent-gold/50 animate-pulse" size={32} />
+                </motion.div>
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-display mb-6 tracking-[0.3em] uppercase text-gradient-gold">
+                You're Invited
+              </h2>
+
+              <p className="mt-8 text-cream-gold/40 text-xs font-sans tracking-[0.3em] uppercase animate-pulse px-4 text-center">
+                Tap the seal to open our invitation
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <audio ref={audioRef} loop src={songUrl} />
+      <CursorSparkleTrail />
+      <AtmosphericParticles />
+      <ScrollToTop />
+      <SuccessToast message={toastMessage} isVisible={isToastVisible} onClose={() => setIsToastVisible(false)} />
+      <MusicToggle isPlaying={isPlaying} onToggle={toggleMusic} />
+
+      <LightboxModal
+        isOpen={!!activeLightboxImage}
+        imageSrc={activeLightboxImage}
+        onClose={() => setActiveLightboxImage(null)}
+      />
+
+      {/* Navigation Bar */}
+      <AnimatePresence>
+        {isInvitationOpened && (
+          <motion.nav
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="fixed top-0 left-0 right-0 z-[80] bg-purple-dark/80 backdrop-blur-md border-b border-accent-gold/10 px-4 sm:px-6 py-3 sm:py-4"
+          >
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0">
+              <div className="font-display text-accent-gold text-lg md:text-xl tracking-widest hidden md:block">K & N</div>
+              <div className="flex gap-4 sm:gap-6 md:gap-8 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-cream-gold/60 w-full md:w-auto overflow-x-auto no-scrollbar justify-start sm:justify-center md:justify-end pb-1 md:pb-0 whitespace-nowrap px-1">
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#hero" className="transition-colors shrink-0">Home</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#story" className="transition-colors shrink-0">Story</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#gallery" className="transition-colors shrink-0">Gallery</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#invitation" className="transition-colors shrink-0">Invite</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#events" className="transition-colors shrink-0">Events</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#blessings" className="transition-colors shrink-0">Blessings</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#rsvp" className="transition-colors shrink-0">RSVP</motion.a>
+              </div>
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+
+      <RSVPModal
+        isOpen={isRSVPOpen}
+        onClose={() => setIsRSVPOpen(false)}
+        setToastMessage={setToastMessage}
+        setIsToastVisible={setIsToastVisible}
+      />
+      <AdminModal
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+        songUrl={songUrl}
+        setSongUrl={setSongUrl}
+        galleryImages={galleryImages}
+        setGalleryImages={setGalleryImages}
+        setToastMessage={setToastMessage}
+        setIsToastVisible={setIsToastVisible}
+        guestMessages={guestMessages}
+        setGuestMessages={setGuestMessages}
+        groomImage={groomImage}
+        setGroomImage={setGroomImage}
+        brideImage={brideImage}
+        setBrideImage={setBrideImage}
+      />
+
+      {/* 1. HERO SECTION */}
+      <section id="hero" className="relative w-full h-screen min-h-[850px] flex flex-col items-center justify-center text-center overflow-hidden">
+        {/* Background Layers */}
+        <div className="hero-sky"></div>
+        <div className="star-field"></div>
+
+        {/* 3D Spinning Ring Ornament — back layer */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1] opacity-20">
+          <div
+            style={{
+              width: '700px', height: '700px',
+              border: '1px solid rgba(212, 169, 100,0.6)',
+              borderRadius: '50%',
+              animation: 'spin3d-ring 18s linear infinite',
+            }}
+          />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1] opacity-10">
+          <div
+            style={{
+              width: '500px', height: '500px',
+              border: '1px solid rgba(212, 169, 100,0.8)',
+              borderRadius: '50%',
+              animation: 'spin3d-ring 10s linear infinite reverse',
+            }}
+          />
+        </div>
+
+        {/* Content Layer */}
+        <motion.div
+          style={{ opacity, scale }}
+          className="relative z-10 w-full max-w-4xl px-4 flex flex-col items-center mt-20 md:mt-32"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 0.5 }}
+            className="mb-6 md:mb-10 w-full flex flex-col items-center gap-3 px-4"
+          >
+            {/* Top decorative line */}
+            <div className="h-[0.5px] w-16 sm:w-24 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+            <h3 className="text-gold-pale tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.35em] uppercase text-[10px] sm:text-xs md:text-sm lg:text-base font-display font-bold text-shimmer text-center px-2 py-1 leading-relaxed">
+              With the Blessings of our Families
+            </h3>
+            {/* Bottom decorative line */}
+            <div className="h-[0.5px] w-16 sm:w-24 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative mb-12 depth-card"
+          >
+            <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-display text-white leading-tight drop-shadow-[0_0_40px_rgba(212, 169, 100,0.5)]">
+              <span className="block mb-2" style={{ textShadow: '0 0 60px rgba(212, 169, 100,0.3), 0 4px 20px rgba(0,0,0,0.8)' }}>YOU ARE</span>
+              <span className="block italic font-serif text-gold-lt tracking-widest translate-y-[-10px]" style={{ textShadow: '0 0 40px rgba(229, 197, 145,0.6)' }}>INVITED</span>
+            </h1>
+          </motion.div>
+
+          {/* Names Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5, duration: 2 }}
+            className="flex flex-col items-center gap-2 mb-12"
+          >
+            {/* Profile pictures restored */}
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-4">
+              <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-[2px] bg-gradient-to-tr from-gold to-burgundy shadow-[0_0_20px_rgba(212, 169, 100,0.3)] float-up-slow">
+                <img src={groomImage} alt="Karan" className="w-full h-full object-cover rounded-full border-4 border-night" />
+              </div>
+              <Heart className="text-gold-lt animate-pulse opacity-80" size={24} />
+               <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-[2px] bg-gradient-to-tr from-gold to-burgundy shadow-[0_0_20px_rgba(212, 169, 100,0.3)] float-up">
+                <img src={brideImage} alt="Nancy" className="w-full h-full object-cover rounded-full border-4 border-night" />
+              </div>
+            </div>
+
+            <div className="h-[0.5px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
+            <p className="text-ivory-dk font-tamil text-xl md:text-2xl mt-4 opacity-80">கரண் மற்றும் நான்சி</p>
+            <p className="text-gold-lt font-display text-2xl md:text-4xl tracking-[0.15em] mb-4">KARAN & NANCY</p>
+            <div className="h-[0.5px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2.2, duration: 1 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <div className="inline-flex items-center gap-4 px-8 py-3 bg-burgundy/40 backdrop-blur-sm border border-gold/30 rounded-full float-up">
+              <Calendar size={18} className="text-gold" />
+              <span className="text-ivory font-display tracking-widest text-lg">JUNE 07, 2026</span>
+            </div>
+            <CountdownTimer targetDate="2026-06-07T06:00:00" />
+          </motion.div>
+        </motion.div>
+
+        {/* The Horizon Svg */}
+        <HorizonSvg />
+
+        {/* Scroll Indicator */}
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5 }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[10] flex flex-col items-center gap-2 cursor-pointer opacity-60"
+          onClick={() => document.getElementById('blessing')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          <span className="text-[9px] uppercase tracking-[0.4em] text-gold font-bold">Scroll</span>
+          <div className="w-[1px] h-12 bg-gradient-to-b from-gold to-transparent"></div>
+        </motion.div>
+      </section>
+
+      <FaithDivider />
+
+      {/* 2. BLESSING SECTION */}
+      <section id="blessing" className="relative py-24 bg-deep overflow-hidden">
+        <div className="star-field opacity-30"></div>
+        <div className="brocade-bg opacity-20"></div>
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
+          <div className="grid md:grid-cols-2 gap-16 items-start">
+            {/* Hindu Quote */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="text-center p-8 bg-maroon-dk/40 backdrop-blur-md rounded-2xl border border-gold/10 shadow-2xl"
+            >
+              <div className="mb-6 flex justify-center">
+                <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center text-gold border border-gold/20 glow-sm">
+                  <OmIcon className="w-10 h-10" />
+                </div>
+              </div>
+              <p className="font-tamil text-xl text-ivory/90 leading-relaxed mb-6">
+                மங்களம் பொருந்திய இந்த திருமண நாளில் இறைவன் ஆசி பொழியட்டும்
+              </p>
+              <div className="h-[1px] w-12 bg-gold/30 mx-auto"></div>
+            </motion.div>
+
+            {/* Christian Quote */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="text-center p-8 bg-navy/40 backdrop-blur-md rounded-2xl border border-gold/10 shadow-2xl"
+            >
+              <div className="mb-6 flex justify-center">
+                <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center text-gold border border-gold/20 glow-sm">
+                  <Church size={32} />
+                </div>
+              </div>
+              <blockquote className="italic font-serif text-xl text-ivory/90 leading-relaxed mb-4">
+                "Love is patient, love is kind. It always protects, always trusts, always hopes, always perseveres."
+              </blockquote>
+              <cite className="text-gold-pale text-xs tracking-widest uppercase">— 1 Corinthians 13:4,7</cite>
+              <div className="h-[1px] w-12 bg-gold/30 mx-auto mt-6"></div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. OUR STORY */}
+      <section id="story" className="bg-night text-ivory py-40 px-4 relative overflow-hidden">
+        <div className="star-field opacity-20"></div>
+        <div className="brocade-bg opacity-10"></div>
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.5 }}
+          >
+            <p className="text-gold tracking-[0.4em] uppercase text-[10px] md:text-xs font-bold mb-4">Our Story</p>
+            <h2 className="text-4xl sm:text-5xl md:text-7xl mb-12 font-display text-white italic">
+              Two Faiths, One Heart
+            </h2>
+
+            <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-gold/50 to-transparent mx-auto mb-16"></div>
+
+            <p className="text-ivory-dk font-serif text-xl md:text-2xl italic leading-relaxed mb-12 max-w-2xl mx-auto drop-shadow-sm">
+              "Where you go I will go, and where you stay I will stay."
+            </p>
+
+            <div className="space-y-8 text-ivory/80 font-body text-base md:text-lg leading-relaxed max-w-2xl mx-auto px-4">
+              <p>
+                Born into different traditions — one shaped by the incense of temple mornings and the warmth of Deepavali lamps,
+                the other by the hymns of Sunday gatherings and the quiet of candlelit prayers —
+                Karan and Nancy found in each other not a contradiction, but a completion.
+              </p>
+              <p>
+                Their love is not a bridge between two worlds. It is the discovery that those worlds were always,
+                at their deepest, pointing toward the same light.
+              </p>
+            </div>
+
+            <div className="mt-16 flex justify-center text-gold/40">
+              <Heart size={32} fill="currentColor" />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 2.1 GALLERY SECTION */}
+      <section id="gallery" className="bg-deep py-40 px-4 overflow-hidden relative">
+        <div className="star-field opacity-10"></div>
+        <div className="brocade-bg opacity-5"></div>
+
+        {/* Decorative Background */}
+        <div className="absolute inset-0 mesh-bg pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-accent-gold via-transparent to-transparent"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 md:mb-24"
+          >
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1 }}
+              className="w-20 h-[1px] bg-accent-gold/40 mx-auto mb-6"
+            ></motion.div>
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-cream-dark mb-6">
+              <motion.span
+                initial={{ opacity: 0, rotateX: 90 }}
+                whileInView={{ opacity: 1, rotateX: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="inline-block gradient-title"
+              >Moments of Love</motion.span>
+            </h2>
+            <p className="text-accent-gold tracking-[0.4em] uppercase text-[10px] md:text-xs font-bold">A glimpse into our journey</p>
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="w-20 h-[1px] bg-accent-gold/40 mx-auto mt-6"
+            ></motion.div>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+            {galleryImages.map((src, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.8, y: 50, rotateX: 20 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+                viewport={{ once: true }}
+                transition={{
+                  duration: 0.8,
+                  delay: (index % 4) * 0.1,
+                  ease: [0.16, 1, 0.3, 1]
+                }}
+                whileHover={{
+                  scale: 1.05,
+                  rotateY: index % 2 === 0 ? 8 : -8,
+                  rotateX: -5,
+                  zIndex: 20,
+                  transition: { duration: 0.4 }
+                }}
+                onClick={() => setActiveLightboxImage(src)}
+                className={`relative aspect-square rounded-2xl overflow-hidden shadow-2xl group cursor-zoom-in perspective-1000 preserve-3d ${(index + 1) % 3 === 0 ? 'md:col-span-2 md:row-span-2' : ''
+                  }`}
+              >
+                <img
+                  src={src}
+                  alt={`Gallery ${index + 1}`}
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 bg-gray-900 group-hover:scale-110"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-dark/90 via-purple-dark/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                {/* 3D Light Reflection */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                {/* Gold corner accents on hover */}
+                <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-accent-gold/0 group-hover:border-accent-gold/60 transition-all duration-500 rounded-tl"></div>
+                <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-accent-gold/0 group-hover:border-accent-gold/60 transition-all duration-500 rounded-tr"></div>
+                <div className="absolute bottom-3 left-3 w-6 h-6 border-l-2 border-b-2 border-accent-gold/0 group-hover:border-accent-gold/60 transition-all duration-500 rounded-bl"></div>
+                <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-accent-gold/0 group-hover:border-accent-gold/60 transition-all duration-500 rounded-br"></div>
+                <div className="absolute bottom-4 left-4 right-4 translate-y-6 group-hover:translate-y-0 transition-transform duration-500">
+                  <p className="text-cream-gold font-display text-sm tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
+                    <Sparkles size={12} className="inline mr-2" />Memory #{index + 1}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5 INVITATION CARD SECTION */}
+      <section
+        id="invitation"
+        className="py-40 px-4 flex justify-center items-center relative overflow-hidden bg-night"
+      >
+        <div className="star-field"></div>
+        <div className="brocade-bg opacity-10"></div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.5 }}
+          className="relative max-w-2xl w-full p-8 md:p-16 rounded-[40px] border border-gold/20 overflow-hidden bg-maroon-dk/40 backdrop-blur-xl shadow-2xl"
+        >
+          {/* Inner Ornate Border */}
+          <div className="absolute inset-4 rounded-[32px] border border-gold/10 pointer-events-none"></div>
+          <div className="absolute inset-6 rounded-[28px] border border-gold/5 pointer-events-none"></div>
+
+          <div className="relative z-10 text-center">
+            {/* Crest */}
+            <div className="mb-12 flex flex-col items-center">
+              <div className="w-24 h-24 border border-gold/30 rounded-full flex items-center justify-center mb-4">
+                <span className="font-display text-4xl text-gold-lt tracking-widest translate-x-[2px]">KN</span>
+              </div>
+              <div className="h-[1px] w-16 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
+            </div>
+
+            <h3 className="text-gold-pale tracking-[0.4em] uppercase text-xs font-bold mb-8">
+              Wedding Invitation
+            </h3>
+
+            <p className="font-serif text-xl md:text-3xl italic text-ivory mb-12 leading-relaxed">
+              With joyful hearts, we invite you to celebrate the beginning of our journey together as we exchange our vows.
+            </p>
+
+            <div className="space-y-8 mb-16">
+              <div className="flex flex-col items-center">
+                <p className="text-gold-lt font-display text-4xl md:text-6xl tracking-widest leading-none">KARAN</p>
+                <div className="flex items-center gap-4 my-2">
+                  <div className="h-[1px] w-12 bg-gold/20"></div>
+                  <Heart size={16} fill="var(--color-gold)" className="opacity-60" />
+                  <div className="h-[1px] w-12 bg-gold/20"></div>
+                </div>
+                <p className="text-gold-lt font-display text-4xl md:text-6xl tracking-widest leading-none">NANCY</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-16">
+              <div className="p-4 rounded-xl bg-gold/5 border border-gold/10">
+                <p className="text-gold tracking-widest text-[10px] font-bold uppercase mb-2">The Date</p>
+                <p className="text-white font-display text-lg">JUNE 07, 2026</p>
+              </div>
+              <div className="p-4 rounded-xl bg-gold/5 border border-gold/10">
+                <p className="text-gold tracking-widest text-[10px] font-bold uppercase mb-2">Location</p>
+                <p className="text-white font-display text-lg">KRISHNAGIRI</p>
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleShare}
+              className="px-12 py-4 bg-gold text-night font-bold tracking-widest uppercase rounded-full shadow-lg transition-transform"
+            >
+              Share Love <Share2 size={18} className="inline ml-2" />
+            </motion.button>
+          </div>
+        </motion.div>
+      </section>
+
+
+      {/* 3. WEDDING EVENTS */}
+      <section id="events" className="py-24 md:py-40 px-4 bg-night relative overflow-hidden min-h-screen">
+        <div className="star-field opacity-30"></div>
+        <div className="brocade-bg opacity-10"></div>
+
+        {/* Floating stars decoration */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-gold pointer-events-none"
+            style={{
+              left: `${[8, 15, 25, 35, 60, 70, 80, 88, 92, 20, 50, 75][i]}%`,
+              top: `${[10, 25, 15, 60, 8, 70, 20, 45, 80, 85, 90, 55][i]}%`,
+              fontSize: `${[16, 12, 20, 14, 18, 10, 22, 16, 12, 18, 14, 10][i]}px`,
+            }}
+            animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8], rotate: [0, 180, 360] }}
+            transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            ✦
+          </motion.div>
+        ))}
+
+        <div className="max-w-6xl mx-auto relative z-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-white italic mb-4">
+              Wedding Events
+            </h2>
+            <p className="text-gold tracking-[0.4em] uppercase text-[10px] md:text-xs font-bold">
+              Click on each event to view details
+            </p>
+            <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-50"></div>
+          </motion.div>
+
+          {/* Timeline */}
+          <div className="relative">
+            {/* Central vertical line */}
+            <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-gold/40 to-transparent -translate-x-1/2"></div>
+
+            <div className="flex flex-col gap-24 md:gap-32">
+              {[
+                {
+                  id: 1,
+                  title: "The Nuptial Mass",
+                  date: "June 7, 2026",
+                  time: "06:00 AM Onwards",
+                  venue: "Our Lady of Fatima Shrine",
+                  address: "Krishnagiri",
+                  emoji: "🕊️",
+                  iconEl: <Church size={22} />,
+                  quote: '"A sacred union blessed by the divine, where two souls become one in faith."',
+                  directions: "https://maps.app.goo.gl/RibXynCFDWEhEFsp9",
+                  side: "right",
+                },
+                {
+                  id: 2,
+                  title: "Holy Muhurtham",
+                  date: "June 7, 2026",
+                  time: "09:00 AM Onwards",
+                  venue: "Jose Palace",
+                  address: "Rayappa Mudali Street, PTV Colony, Krishnagiri",
+                  emoji: "🔥",
+                  iconEl: <Flame size={22} />,
+                  quote: '"Traditions that bind us to our roots and rituals that celebrate eternal love."',
+                  directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A",
+                  side: "left",
+                },
+                {
+                  id: 3,
+                  title: "Grand Reception",
+                  date: "June 7, 2026",
+                  time: "12:30 PM Onwards",
+                  venue: "Jose Palace",
+                  address: "Rayappa Mudali Street, PTV Colony, Krishnagiri",
+                  emoji: "🥂",
+                  iconEl: <Music size={22} />,
+                  quote: '"An evening of joy, laughter, and celebration as we begin our new journey."',
+                  directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A",
+                  side: "right",
+                },
+              ].map((event, idx) => {
+                const isLeft = event.side === 'left';
+                return (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ duration: 0.8, delay: idx * 0.1 }}
+                    className="relative flex flex-col md:flex-row items-center gap-8 md:gap-0"
+                  >
+                    {/* ── EVENT DETAILS ── */}
+                    <div className={`w-full md:w-[42%] ${isLeft ? 'md:order-3 md:pl-16 text-center md:text-left' : 'md:order-1 md:pr-16 text-center md:text-right'}`}>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <h3 className={`text-2xl sm:text-3xl md:text-4xl font-display text-gold-lt italic mb-4 leading-tight`}>
+                          {event.title}
+                        </h3>
+                        <div className={`flex flex-col md:flex-row gap-2 mb-4 justify-center ${isLeft ? 'md:justify-start' : 'md:justify-end'}`}>
+                          <div className="flex items-center justify-center gap-2 text-ivory/70 text-sm">
+                            <Calendar size={13} className="text-gold/60 shrink-0" />
+                            <span>{event.date}</span>
+                          </div>
+                          <div className="hidden md:block text-gold/40">•</div>
+                          <div className="flex items-center justify-center gap-2 text-ivory/70 text-sm">
+                            <Clock size={13} className="text-gold/60 shrink-0" />
+                            <span>{event.time}</span>
+                          </div>
+                        </div>
+                        <p className="text-gold font-display text-sm tracking-widest uppercase mb-1">{event.venue}</p>
+                        <p className="text-ivory/40 text-xs tracking-wider">{event.address}</p>
+                      </motion.div>
+                    </div>
+
+                    {/* ── CENTRAL TIMELINE NODE ── */}
+                    <div className="md:order-2 flex flex-col items-center z-10 shrink-0">
+                      <motion.a
+                        href={event.directions}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.15, boxShadow: '0 0 30px rgba(212, 169, 100,0.5)' }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-14 h-14 rounded-full border-2 border-gold/50 bg-night flex items-center justify-center text-gold shadow-[0_0_20px_rgba(212, 169, 100,0.2)] cursor-pointer transition-all"
+                        title="Get Directions"
+                      >
+                        {event.iconEl}
+                      </motion.a>
+                    </div>
+
+                    {/* ── QUOTE CARD ── */}
+                    <div className={`w-full md:w-[42%] ${isLeft ? 'md:order-1 md:pr-16' : 'md:order-3 md:pl-16'}`}>
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -4 }}
+                        transition={{ duration: 0.3 }}
+                        className="p-6 md:p-8 rounded-3xl bg-maroon-dk/40 backdrop-blur-md border border-gold/10 hover:border-gold/20 transition-all shadow-xl card-3d holo-card text-center md:text-left"
+                      >
+                        <div className="text-3xl mb-4 flex justify-center md:justify-start">{event.emoji}</div>
+                        <p className="text-ivory/80 font-serif italic text-base md:text-lg leading-relaxed mb-4">
+                          {event.quote}
+                        </p>
+                        <motion.a
+                          href={event.directions}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ x: 4 }}
+                          className="flex items-center justify-center md:justify-start gap-1 text-gold text-xs tracking-[0.2em] uppercase font-bold hover:text-gold-lt transition-colors"
+                        >
+                          View Details <span className="text-base">›</span>
+                        </motion.a>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. BLESSINGS & MAP */}
+      <section id="blessings" className="bg-night py-32 px-4 relative overflow-hidden">
+        <div className="star-field opacity-10"></div>
+        <div className="brocade-bg opacity-10"></div>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-24 items-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="text-center lg:text-left"
+          >
+            <h2 className="text-4xl sm:text-5xl md:text-6xl mb-16 font-display font-bold text-white italic">
+              Blessings From
+            </h2>
+
+            <div className="space-y-16">
+              <div>
+                <p className="text-gold tracking-[0.4em] uppercase text-[10px] mb-4 font-bold">Groom's Parents</p>
+                <p className="text-2xl sm:text-3xl md:text-4xl font-display text-gold-lt leading-relaxed">Mr. Venkatesan &<br />Mrs. Sharmila</p>
+              </div>
+
+              <div>
+                <p className="text-gold tracking-[0.4em] uppercase text-[10px] mb-4 font-bold">Bride's Parents</p>
+                <p className="text-2xl sm:text-3xl md:text-4xl font-display text-gold-lt leading-relaxed">Mr. George Vincent & <br /> Mrs. Kumudha</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="relative"
+          >
+            <div className="w-full h-[400px] md:h-[500px] bg-gray-900 rounded-3xl overflow-hidden border border-gold/20 shadow-2xl">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.685338168233!2d80.2206453148229!3d13.0556816908007!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a52665977777777%3A0x7777777777777777!2sOur%20Lady%20of%20Fatima%20Church!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin"
+                width="100%"
+                height="100%"
+                style={{ border: 0, filter: 'grayscale(1) invert(0.9) contrast(1.2)' }}
+                allowFullScreen={true}
+                loading="lazy"
+              ></iframe>
+            </div>
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gold/10 rounded-full blur-[60px]"></div>
+          </motion.div>
+        </div>
+      </section>
+
+
+      {/* 5. RSVP CTA */}
+      <section id="rsvp" className="bg-night text-ivory py-40 px-4 text-center relative overflow-hidden">
+        <div className="star-field opacity-30"></div>
+        <div className="brocade-bg opacity-10"></div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto relative z-10"
+        >
+          <div className="flex justify-center mb-12">
+            <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center text-gold border border-gold/20 glow-sm">
+              <Heart size={32} fill="currentColor" />
+            </div>
+          </div>
+
+          <h2 className="text-4xl sm:text-6xl md:text-8xl mb-8 font-display font-bold text-white italic">
+            Will You Join Us?
+          </h2>
+
+          <p className="text-ivory/60 text-lg md:text-2xl mb-16 max-w-xl mx-auto font-serif italic">
+            "Your presence would mean the world to us. Please let us know if you can attend."
+          </p>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsRSVPOpen(true)}
+            className="px-16 py-6 bg-gold text-night font-bold tracking-[0.2em] text-xl rounded-full shadow-[0_0_30px_rgba(212, 169, 100,0.3)] hover:shadow-[0_0_50px_rgba(212, 169, 100,0.5)] transition-all uppercase"
+          >
+            RSVP NOW
+          </motion.button>
+        </motion.div>
+
+        {/* Guest Book Section */}
+        <div className="max-w-4xl mx-auto mt-48 text-left relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h3 className="text-5xl font-display font-bold text-white mb-4 italic">Blessings</h3>
+            <div className="w-24 h-[1px] bg-gold/30 mx-auto"></div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="p-8 md:p-12 rounded-[2.5rem] bg-navy/30 border border-gold/10 backdrop-blur-md mb-16"
+          >
+            <form onSubmit={handleGuestBookSubmit} className="space-y-6">
+              <input
+                required
+                type="text"
+                placeholder="Your Name"
+                className="w-full bg-night/50 border border-gold/20 rounded-2xl px-8 py-4 text-ivory outline-none focus:border-gold/50 transition-all"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+              />
+              <textarea
+                required
+                maxLength={500}
+                placeholder="Leave a heartfelt message..."
+                className="w-full bg-night/50 border border-gold/20 rounded-2xl px-8 py-4 text-ivory outline-none focus:border-gold/50 transition-all resize-none"
+                rows={4}
+                value={guestMessage}
+                onChange={(e) => setGuestMessage(e.target.value)}
+              />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                className="px-10 py-4 bg-gold/10 text-gold border border-gold/20 rounded-full font-bold uppercase tracking-widest hover:bg-gold/20 transition-all"
+              >
+                Post Blessing
+              </motion.button>
+            </form>
+          </motion.div>
+
+          <div className="space-y-8">
+            <AnimatePresence mode="popLayout">
+              {(showAllMessages ? guestMessages : guestMessages.slice(0, 3)).map((msg, i) => (
+                <motion.div
+                  key={i}
+                  layout
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-8 rounded-[2rem] bg-maroon-dk/20 border border-gold/5 backdrop-blur-sm"
+                >
+                  <p className="text-ivory/80 font-serif italic text-lg mb-4">"{msg.message}"</p>
+                  <p className="text-gold-pale font-display tracking-widest uppercase text-sm">— {msg.name}</p>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {guestMessages.length > 3 && (
+              <button
+                onClick={() => setShowAllMessages(!showAllMessages)}
+                className="w-full py-4 text-gold/40 hover:text-gold transition-colors font-display tracking-[0.3em] uppercase text-xs"
+              >
+                {showAllMessages ? "Show Less" : `Show All Messages (${guestMessages.length})`}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-48 pt-12 border-t border-gold/10">
+          <div className="max-w-4xl mx-auto flex flex-col items-center gap-8">
+            <div className="flex items-center gap-4">
+              <div className="h-[1px] w-12 bg-gold/20"></div>
+              <span className="font-display text-2xl text-gold-lt tracking-widest">K & N</span>
+              <div className="h-[1px] w-12 bg-gold/20"></div>
+            </div>
+            <p className="text-ivory/30 text-[10px] uppercase tracking-[0.5em]">June 07, 2026 • Krishnagiri</p>
+            <div className="flex gap-8 mb-4">
+              <a href="#" className="opacity-40 hover:opacity-100 transition-opacity"><Instagram size={20} /></a>
+              <a href="#" onClick={() => setIsAdminOpen(true)} className="opacity-40 hover:opacity-100 transition-opacity"><Lock size={20} /></a>
+            </div>
+          </div>
+        </footer>
+      </section>
+    </div>
+  );
+}
