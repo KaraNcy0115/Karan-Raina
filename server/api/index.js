@@ -1,4 +1,4 @@
-import appPromise from '../server.js';
+import appPromise from '../index.js';
 
 export default async (req, res) => {
   const app = await appPromise;

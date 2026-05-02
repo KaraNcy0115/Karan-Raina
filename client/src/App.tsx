@@ -5,7 +5,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Cropper from 'react-easy-crop';
-import localforage from 'localforage';
 import { motion, AnimatePresence, useScroll, useTransform, useInView, useMotionValue, useSpring } from 'motion/react';
 import confetti from 'canvas-confetti';
 import {
@@ -332,14 +331,6 @@ const RSVPModal = ({
         body: JSON.stringify(formData),
       });
       if (response.ok) {
-        try {
-          const savedRsvps = JSON.parse(localStorage.getItem('wedding_rsvps') || '[]');
-          savedRsvps.unshift({ ...formData, timestamp: new Date().toISOString() });
-          localStorage.setItem('wedding_rsvps', JSON.stringify(savedRsvps));
-        } catch (e) {
-          console.error('Failed to save RSVP to local storage');
-        }
-
         setStatus('success');
         setToastMessage('RSVP submitted successfully!');
         setIsToastVisible(true);
@@ -603,7 +594,17 @@ const AdminModal = ({
   brideImage,
   setBrideImage,
   documentUrls,
-  setDocumentUrls
+  setDocumentUrls,
+  groomName,
+  setGroomName,
+  brideName,
+  setBrideName,
+  weddingDate,
+  setWeddingDate,
+  weddingVenue,
+  setWeddingVenue,
+  coverImage,
+  setCoverImage
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -621,6 +622,16 @@ const AdminModal = ({
   setBrideImage: (img: string) => void;
   documentUrls: string[];
   setDocumentUrls: (docs: string[]) => void;
+  groomName: string;
+  setGroomName: (n: string) => void;
+  brideName: string;
+  setBrideName: (n: string) => void;
+  weddingDate: string;
+  setWeddingDate: (d: string) => void;
+  weddingVenue: string;
+  setWeddingVenue: (v: string) => void;
+  coverImage: string;
+  setCoverImage: (img: string) => void;
 }) => {
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -756,7 +767,15 @@ const AdminModal = ({
   };
 
   const saveConfig = async () => {
-    const success = await updateCloudSettings({ songUrl: newSong });
+    const success = await updateCloudSettings({ 
+      songUrl: newSong,
+      groomName,
+      brideName,
+      weddingDate,
+      weddingDate,
+      weddingVenue,
+      coverImage
+    });
     if (success) {
       setSongUrl(newSong);
       setToastMessage('Settings Saved to Cloud!');
@@ -764,6 +783,38 @@ const AdminModal = ({
       setToastMessage('Failed to save settings');
     }
     setIsToastVisible(true);
+  };
+
+  const clearRSVPs = async () => {
+    if (window.confirm('Clear all RSVPs? This cannot be undone.')) {
+      try {
+        const res = await fetch('/api/rsvps', { method: 'DELETE' });
+        if (res.ok) {
+          setRsvps([]);
+          setToastMessage('RSVPs cleared');
+          setIsToastVisible(true);
+        }
+      } catch (e) {
+        setToastMessage('Failed to clear RSVPs');
+        setIsToastVisible(true);
+      }
+    }
+  };
+
+  const clearGuestbook = async () => {
+    if (window.confirm('Clear all blessings? This cannot be undone.')) {
+      try {
+        const res = await fetch('/api/guestbook', { method: 'DELETE' });
+        if (res.ok) {
+          setGuestMessages([]);
+          setToastMessage('Blessings cleared');
+          setIsToastVisible(true);
+        }
+      } catch (e) {
+        setToastMessage('Failed to clear blessings');
+        setIsToastVisible(true);
+      }
+    }
   };
 
   const addImage = async () => {
@@ -873,15 +924,6 @@ const AdminModal = ({
     }
   };
 
-  const clearGuestbook = async () => {
-    if (window.confirm('Are you sure you want to delete all messages from cloud?')) {
-      // This would need a backend route, but for now we'll just show the intent
-      setToastMessage('Clearing messages...');
-      setIsToastVisible(true);
-      // Logic for clearing guestbook on server could be added to server.js
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-purple-dark/90 backdrop-blur-sm">
       <div className="clay-card-gold text-purple-dark w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
@@ -917,6 +959,74 @@ const AdminModal = ({
             </form>
           ) : (
             <div className="space-y-6 w-full">
+              <div className="space-y-3 bg-purple-light/5 p-4 rounded-xl border border-accent-gold/10">
+                <label className="text-xs font-bold uppercase tracking-widest text-purple-deep">General Info</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold block mb-1">Groom Name</label>
+                    <input type="text" value={groomName} onChange={(e) => setGroomName(e.target.value)} className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold block mb-1">Bride Name</label>
+                    <input type="text" value={brideName} onChange={(e) => setBrideName(e.target.value)} className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold block mb-1">Wedding Date & Time</label>
+                  <input type="datetime-local" value={weddingDate.substring(0, 16)} onChange={(e) => setWeddingDate(e.target.value)} className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold block mb-1">Wedding Venue</label>
+                  <input type="text" value={weddingVenue} onChange={(e) => setWeddingVenue(e.target.value)} className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                </div>
+                <button onClick={saveConfig} className="w-full bg-purple-deep text-cream-gold py-2 rounded-lg text-xs font-bold mt-2 hover:bg-purple-light transition-all">Save General Settings</button>
+              </div>
+
+              <div className="space-y-3 bg-purple-light/5 p-4 rounded-xl border border-accent-gold/10">
+                <label className="text-xs font-bold uppercase tracking-widest text-purple-deep">Welcome Cover Image</label>
+                <div
+                  className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer hover:bg-accent-gold/5 transition-colors relative"
+                  onClick={() => document.getElementById('cover-upload')?.click()}
+                >
+                  <input
+                    type="file"
+                    id="cover-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setToastMessage('Uploading cover image...');
+                        setIsToastVisible(true);
+                        const url = await uploadFile(file);
+                        const success = await updateCloudSettings({ coverImage: url });
+                        if (success) {
+                          setCoverImage(url);
+                          setToastMessage('Cover image updated in cloud!');
+                        }
+                      }
+                      if (e.target) e.target.value = '';
+                    }}
+                  />
+                  <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
+                  <p className="text-xs font-semibold">Upload Welcome Background</p>
+                </div>
+                {coverImage && (
+                  <div className="relative aspect-video rounded-md overflow-hidden mt-2 border border-accent-gold/30">
+                    <img src={coverImage} className="w-full h-full object-cover" />
+                    <button 
+                      onClick={async () => {
+                        const success = await updateCloudSettings({ coverImage: '' });
+                        if (success) setCoverImage('');
+                      }} 
+                      className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3">
                 <label className="text-sm font-bold block">Background Music (.mp3)</label>
 
@@ -1084,7 +1194,10 @@ const AdminModal = ({
               </div>
 
               <div className="border-t border-accent-gold/20 pt-4 pb-2">
-                <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><CheckCircle2 size={16} className="text-green-600" /> RSVP List ({rsvps.length})</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-bold flex items-center gap-2"><CheckCircle2 size={16} className="text-green-600" /> RSVP List ({rsvps.length})</h3>
+                  {rsvps.length > 0 && <button onClick={clearRSVPs} className="text-[10px] text-red-500 font-bold hover:underline">Clear All</button>}
+                </div>
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
                   {rsvps.length === 0 ? (
                     <p className="text-xs text-center text-purple-dark/50 py-4">No RSVPs received yet</p>
@@ -1101,6 +1214,25 @@ const AdminModal = ({
                         {rsvp.message && (
                           <div className="text-xs mt-2 italic bg-white/50 p-2 rounded border border-purple-light/30">"{rsvp.message}"</div>
                         )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-accent-gold/20 pt-4 pb-2">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-bold flex items-center gap-2"><Heart size={16} className="text-purple-deep" /> Blessings ({guestMessages.length})</h3>
+                  {guestMessages.length > 0 && <button onClick={clearGuestbook} className="text-[10px] text-red-500 font-bold hover:underline">Clear All</button>}
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                  {guestMessages.length === 0 ? (
+                    <p className="text-xs text-center text-purple-dark/50 py-4">No blessings received yet</p>
+                  ) : (
+                    guestMessages.map((msg: any, i: number) => (
+                      <div key={i} className="bg-purple-light/10 p-3 rounded-lg border border-accent-gold/10 text-xs">
+                        <div className="font-bold mb-1">{msg.name}</div>
+                        <div className="italic opacity-80">"{msg.message}"</div>
                       </div>
                     ))
                   )}
@@ -1164,7 +1296,12 @@ export default function App() {
 
   const [groomImage, setGroomImage] = useState('https://picsum.photos/seed/groom/400/400');
   const [brideImage, setBrideImage] = useState('https://picsum.photos/seed/bride/400/400');
+  const [groomName, setGroomName] = useState('KARAN');
+  const [brideName, setBrideName] = useState('NANCY');
+  const [weddingDate, setWeddingDate] = useState('2026-06-07T06:00:00');
+  const [weddingVenue, setWeddingVenue] = useState('KRISHNAGIRI');
   const [documentUrls, setDocumentUrls] = useState<string[]>([]);
+  const [coverImage, setCoverImage] = useState('');
 
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
@@ -1180,11 +1317,13 @@ export default function App() {
           if (settings.songUrl) setSongUrl(settings.songUrl);
           if (settings.groomImage) setGroomImage(settings.groomImage);
           if (settings.brideImage) setBrideImage(settings.brideImage);
+          if (settings.groomName) setGroomName(settings.groomName);
+          if (settings.brideName) setBrideName(settings.brideName);
+          if (settings.weddingDate) setWeddingDate(settings.weddingDate);
+          if (settings.weddingVenue) setWeddingVenue(settings.weddingVenue);
+          if (settings.coverImage) setCoverImage(settings.coverImage);
           if (settings.galleryImages && settings.galleryImages.length > 0) {
             setGalleryImages(settings.galleryImages);
-          }
-          if (settings.documentUrls && settings.documentUrls.length > 0) {
-            setDocumentUrls(settings.documentUrls);
           } else {
             setGalleryImages([
               'https://picsum.photos/seed/wedding-1/800/800',
@@ -1196,6 +1335,9 @@ export default function App() {
               'https://picsum.photos/seed/wedding-7/800/800',
               'https://picsum.photos/seed/wedding-8/800/800'
             ]);
+          }
+          if (settings.documentUrls && settings.documentUrls.length > 0) {
+            setDocumentUrls(settings.documentUrls);
           }
         }
       } catch (e) {
@@ -1268,10 +1410,6 @@ export default function App() {
       setIsToastVisible(true);
     }
   };
-      console.error('Failed to post message:', error);
-    }
-  };
-
   const playBells = () => {
     if (audioRef.current) {
       audioRef.current.play().catch(e => console.log("Audio play blocked:", e));
@@ -1363,6 +1501,12 @@ export default function App() {
           >
             {/* Aurora Animated Background */}
             <div className="absolute inset-0 bg-aurora"></div>
+            {coverImage && (
+              <div 
+                className="absolute inset-0 z-0 opacity-30" 
+                style={{ backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+              ></div>
+            )}
             {/* Mesh overlay */}
             <div className="absolute inset-0 mesh-bg"></div>
             {/* Elegant Atmospheric Lighting */}
@@ -1399,7 +1543,7 @@ export default function App() {
                   className="wax-seal w-48 h-48 md:w-64 md:h-64 flex flex-col items-center justify-center p-4 cursor-pointer z-20 mx-auto"
                 >
                   <div className="w-full h-full border-2 border-dashed border-white/40 rounded-full flex flex-col items-center justify-center">
-                    <h1 className="text-5xl md:text-7xl font-display text-white mb-2 drop-shadow-md">K & N</h1>
+                    <h1 className="text-5xl md:text-7xl font-display text-white mb-2 drop-shadow-md">{groomName[0]} & {brideName[0]}</h1>
                     <p className="text-white/80 text-[10px] md:text-xs tracking-[0.4em] uppercase font-bold">Open</p>
                   </div>
                 </motion.div>
@@ -1449,7 +1593,7 @@ export default function App() {
             className="fixed top-0 left-0 right-0 z-[80] bg-purple-dark/80 backdrop-blur-md border-b border-accent-gold/10 px-4 sm:px-6 py-3 sm:py-4"
           >
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0">
-              <div className="font-display text-accent-gold text-lg md:text-xl tracking-widest hidden md:block">K & N</div>
+              <div className="font-display text-accent-gold text-lg md:text-xl tracking-widest hidden md:block">{groomName[0]} & {brideName[0]}</div>
               <div className="flex gap-4 sm:gap-6 md:gap-8 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-cream-gold/60 w-full md:w-auto overflow-x-auto no-scrollbar justify-start sm:justify-center md:justify-end pb-1 md:pb-0 whitespace-nowrap px-1">
                 <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#hero" className="transition-colors shrink-0">Home</motion.a>
                 <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#story" className="transition-colors shrink-0">Story</motion.a>
@@ -1487,6 +1631,16 @@ export default function App() {
         setBrideImage={setBrideImage}
         documentUrls={documentUrls}
         setDocumentUrls={setDocumentUrls}
+        groomName={groomName}
+        setGroomName={setGroomName}
+        brideName={brideName}
+        setBrideName={setBrideName}
+        weddingDate={weddingDate}
+        setWeddingDate={setWeddingDate}
+        weddingVenue={weddingVenue}
+        setWeddingVenue={setWeddingVenue}
+        coverImage={coverImage}
+        setCoverImage={setCoverImage}
       />
 
       {/* 1. HERO SECTION */}
@@ -1569,7 +1723,7 @@ export default function App() {
 
             <div className="h-[0.5px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
             <p className="text-ivory-dk font-tamil text-xl md:text-2xl mt-4 opacity-80">கரண் மற்றும் நான்சி</p>
-            <p className="text-gold-lt font-display text-2xl md:text-4xl tracking-[0.15em] mb-4">KARAN & NANCY</p>
+            <p className="text-gold-lt font-display text-2xl md:text-4xl tracking-[0.15em] mb-4">{groomName} & {brideName}</p>
             <div className="h-[0.5px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
           </motion.div>
 
@@ -1581,9 +1735,9 @@ export default function App() {
           >
             <div className="inline-flex items-center gap-4 px-8 py-3 bg-burgundy/40 backdrop-blur-sm border border-gold/30 rounded-full float-up">
               <Calendar size={18} className="text-gold" />
-              <span className="text-ivory font-display tracking-widest text-lg">JUNE 07, 2026</span>
+              <span className="text-ivory font-display tracking-widest text-lg">{new Date(weddingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}</span>
             </div>
-            <CountdownTimer targetDate="2026-06-07T06:00:00" />
+            <CountdownTimer targetDate={weddingDate} />
           </motion.div>
         </motion.div>
 
@@ -1822,24 +1976,24 @@ export default function App() {
 
             <div className="space-y-8 mb-16">
               <div className="flex flex-col items-center">
-                <p className="text-gold-lt font-display text-4xl md:text-6xl tracking-widest leading-none">KARAN</p>
+                <p className="text-gold-lt font-display text-4xl md:text-6xl tracking-widest leading-none">{groomName}</p>
                 <div className="flex items-center gap-4 my-2">
                   <div className="h-[1px] w-12 bg-gold/20"></div>
                   <Heart size={16} fill="var(--color-gold)" className="opacity-60" />
                   <div className="h-[1px] w-12 bg-gold/20"></div>
                 </div>
-                <p className="text-gold-lt font-display text-4xl md:text-6xl tracking-widest leading-none">NANCY</p>
+                <p className="text-gold-lt font-display text-4xl md:text-6xl tracking-widest leading-none">{brideName}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-16">
               <div className="p-4 rounded-xl bg-gold/5 border border-gold/10">
                 <p className="text-gold tracking-widest text-[10px] font-bold uppercase mb-2">The Date</p>
-                <p className="text-white font-display text-lg">JUNE 07, 2026</p>
+                <p className="text-white font-display text-lg">{new Date(weddingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}</p>
               </div>
               <div className="p-4 rounded-xl bg-gold/5 border border-gold/10">
                 <p className="text-gold tracking-widest text-[10px] font-bold uppercase mb-2">Location</p>
-                <p className="text-white font-display text-lg">KRISHNAGIRI</p>
+                <p className="text-white font-display text-lg">{weddingVenue}</p>
               </div>
             </div>
 
@@ -2186,10 +2340,10 @@ export default function App() {
           <div className="max-w-4xl mx-auto flex flex-col items-center gap-8">
             <div className="flex items-center gap-4">
               <div className="h-[1px] w-12 bg-gold/20"></div>
-              <span className="font-display text-2xl text-gold-lt tracking-widest">K & N</span>
+              <span className="font-display text-2xl text-gold-lt tracking-widest">{groomName[0]} & {brideName[0]}</span>
               <div className="h-[1px] w-12 bg-gold/20"></div>
             </div>
-            <p className="text-ivory/30 text-[10px] uppercase tracking-[0.5em]">June 07, 2026 • Krishnagiri</p>
+            <p className="text-ivory/30 text-[10px] uppercase tracking-[0.5em]">{new Date(weddingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • {weddingVenue}</p>
             <div className="flex gap-8 mb-4">
               <a href="#" className="opacity-40 hover:opacity-100 transition-opacity"><Instagram size={20} /></a>
               <a href="#" onClick={() => setIsAdminOpen(true)} className="opacity-40 hover:opacity-100 transition-opacity"><Lock size={20} /></a>
