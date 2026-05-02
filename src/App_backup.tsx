@@ -35,8 +35,7 @@ import {
   Settings,
   Plus,
   UploadCloud,
-  Instagram,
-  FileText
+  Instagram
 } from 'lucide-react';
 
 import HorizonSvg from './components/HorizonSvg';
@@ -158,8 +157,8 @@ const MagicalDustAnimation = () => {
               left: p.left,
               width: p.size,
               height: p.size,
-              color: p.type === 'heart' ? 'rgba(212, 169, 100,0.3)' : '#D4AF37',
-              filter: `drop-shadow(0 0 ${p.type === 'heart' ? '8' : '5'}px rgba(212, 169, 100,0.6))`
+              color: p.type === 'heart' ? 'rgba(212,175,55,0.3)' : '#D4AF37',
+              filter: `drop-shadow(0 0 ${p.type === 'heart' ? '8' : '5'}px rgba(212,175,55,0.6))`
             }}
           >
             {p.type === 'sparkle' ? <Sparkles size={parseFloat(p.size)} /> :
@@ -193,87 +192,7 @@ const MusicToggle = ({ isPlaying, onToggle }: { isPlaying: boolean; onToggle: ()
   );
 };
 
-
-const TimeUnit = ({ value, label, index, light = false }: { value: number; label: string; index: number; light?: boolean }) => (
-  <>
-    {index > 0 && <div className="countdown-divider"></div>}
-    <div className="countdown-unit">
-      <span className={`countdown-number ${light ? 'countdown-number-light' : ''}`}>
-        {value.toString().padStart(2, '0')}
-      </span>
-      <span className={`countdown-label ${light ? 'countdown-label-light' : ''}`}>
-        {label}
-      </span>
-    </div>
-  </>
-);
-
-// --- Countdown Timer Component ---
-const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = +new Date(targetDate) - +new Date();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
-      }
-    };
-    const timer = setInterval(calculateTimeLeft, 1000);
-    calculateTimeLeft();
-    return () => clearInterval(timer);
-  }, [targetDate]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      className="countdown-plaque mt-10 mb-8"
-    >
-      <TimeUnit value={timeLeft.days} label="Days" index={0} />
-      <TimeUnit value={timeLeft.hours} label="Hours" index={1} />
-      <TimeUnit value={timeLeft.minutes} label="Mins" index={2} />
-      <TimeUnit value={timeLeft.seconds} label="Secs" index={3} />
-    </motion.div>
-  );
-};
-
-const CountdownTimerLight = ({ targetDate }: { targetDate: string }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = +new Date(targetDate) - +new Date();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
-      }
-    };
-    const timer = setInterval(calculateTimeLeft, 1000);
-    calculateTimeLeft();
-    return () => clearInterval(timer);
-  }, [targetDate]);
-
-  return (
-    <div className="countdown-plaque countdown-plaque-light mt-6 mb-2">
-      <TimeUnit value={timeLeft.days} label="Days" index={0} light />
-      <TimeUnit value={timeLeft.hours} label="Hours" index={1} light />
-      <TimeUnit value={timeLeft.minutes} label="Mins" index={2} light />
-      <TimeUnit value={timeLeft.seconds} label="Secs" index={3} light />
-    </div>
-  );
-};
-
+// --- Success Toast Component ---
 const SuccessToast = ({ message, isVisible, onClose }: { message: string; isVisible: boolean; onClose: () => void }) => {
   useEffect(() => {
     if (isVisible) {
@@ -480,6 +399,85 @@ const RSVPModal = ({
   );
 };
 
+const TimeUnit = ({ value, label, index, light = false }: { value: number; label: string; index: number; light?: boolean }) => (
+  <>
+    {index > 0 && <div className="countdown-divider"></div>}
+    <div className="countdown-unit">
+      <span className={`countdown-number ${light ? 'countdown-number-light' : ''}`}>
+        {value.toString().padStart(2, '0')}
+      </span>
+      <span className={`countdown-label ${light ? 'countdown-label-light' : ''}`}>
+        {label}
+      </span>
+    </div>
+  </>
+);
+
+// --- Countdown Timer Component ---
+const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    };
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft();
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      className="countdown-plaque mt-10 mb-8"
+    >
+      <TimeUnit value={timeLeft.days} label="Days" index={0} />
+      <TimeUnit value={timeLeft.hours} label="Hours" index={1} />
+      <TimeUnit value={timeLeft.minutes} label="Mins" index={2} />
+      <TimeUnit value={timeLeft.seconds} label="Secs" index={3} />
+    </motion.div>
+  );
+};
+
+const CountdownTimerLight = ({ targetDate }: { targetDate: string }) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    };
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft();
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return (
+    <div className="countdown-plaque countdown-plaque-light mt-6 mb-2">
+      <TimeUnit value={timeLeft.days} label="Days" index={0} light />
+      <TimeUnit value={timeLeft.hours} label="Hours" index={1} light />
+      <TimeUnit value={timeLeft.minutes} label="Mins" index={2} light />
+      <TimeUnit value={timeLeft.seconds} label="Secs" index={3} light />
+    </div>
+  );
+};
 
 // --- Scroll To Top Component ---
 const ScrollToTop = () => {
@@ -601,9 +599,7 @@ const AdminModal = ({
   groomImage,
   setGroomImage,
   brideImage,
-  setBrideImage,
-  documentUrls,
-  setDocumentUrls
+  setBrideImage
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -619,15 +615,12 @@ const AdminModal = ({
   setGroomImage: (img: string) => void;
   brideImage: string;
   setBrideImage: (img: string) => void;
-  documentUrls: string[];
-  setDocumentUrls: (docs: string[]) => void;
 }) => {
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [newImage, setNewImage] = useState('');
   const [newSong, setNewSong] = useState(songUrl);
   const [rsvps, setRsvps] = useState<any[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
 
   // Crop states
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -636,48 +629,6 @@ const AdminModal = ({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
-
-  const uploadFile = async (file: File): Promise<string> => {
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      return data.url;
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const base64ToBlob = (base64: string) => {
-    const byteString = atob(base64.split(',')[1]);
-    const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([ab], { type: mimeString });
-  };
-
-  const updateCloudSettings = async (updates: any) => {
-    try {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-      return response.ok;
-    } catch (e) {
-      console.error('Failed to update cloud settings:', e);
-      return false;
-    }
-  };
 
   const initCrop = (type: 'groom' | 'bride') => {
     const input = document.createElement('input');
@@ -701,24 +652,18 @@ const AdminModal = ({
   const finalizeCrop = async () => {
     try {
       const croppedImgBase64 = await getCroppedImg(cropImageRaw, croppedAreaPixels);
-      const blob = base64ToBlob(croppedImgBase64);
-      const file = new File([blob], `profile_${cropTarget}.jpg`, { type: 'image/jpeg' });
-      
-      const cloudUrl = await uploadFile(file);
-      
       if (cropTarget === 'groom') {
-        await updateCloudSettings({ groomImage: cloudUrl });
-        setGroomImage(cloudUrl);
+        localStorage.setItem('wedding_groom_image', croppedImgBase64);
+        setGroomImage(croppedImgBase64);
       } else {
-        await updateCloudSettings({ brideImage: cloudUrl });
-        setBrideImage(cloudUrl);
+        localStorage.setItem('wedding_bride_image', croppedImgBase64);
+        setBrideImage(croppedImgBase64);
       }
-      
-      setToastMessage('Profile photo updated in cloud!');
+      setToastMessage('Profile photo updated!');
       setIsToastVisible(true);
       setCropModalOpen(false);
     } catch (e) {
-      setToastMessage('Upload failed. Check Cloudinary settings.');
+      setToastMessage('Failed to crop image');
       setIsToastVisible(true);
       setCropModalOpen(false);
     }
@@ -726,18 +671,12 @@ const AdminModal = ({
 
   useEffect(() => {
     if (isAuthenticated) {
-      const fetchAdminData = async () => {
-        try {
-          const response = await fetch('/api/rsvps');
-          if (response.ok) {
-            const serverRsvps = await response.json();
-            setRsvps(serverRsvps);
-          }
-        } catch (e) {
-          console.error('Failed to fetch RSVPs');
-        }
-      };
-      fetchAdminData();
+      try {
+        const savedRsvps = JSON.parse(localStorage.getItem('wedding_rsvps') || '[]');
+        setRsvps(savedRsvps);
+      } catch (e) {
+        setRsvps([]);
+      }
     }
   }, [isAuthenticated]);
 
@@ -756,51 +695,69 @@ const AdminModal = ({
   };
 
   const saveConfig = async () => {
-    const success = await updateCloudSettings({ songUrl: newSong });
-    if (success) {
-      setSongUrl(newSong);
-      setToastMessage('Settings Saved to Cloud!');
-    } else {
-      setToastMessage('Failed to save settings');
-    }
+    localStorage.setItem('wedding_song', newSong);
+    await localforage.removeItem('wedding_song_blob');
+    setSongUrl(newSong);
+    setToastMessage('Settings Saved!');
     setIsToastVisible(true);
   };
 
-  const addImage = async () => {
+  const addImage = () => {
     if (!newImage) return;
     const updated = [...galleryImages, newImage];
-    const success = await updateCloudSettings({ galleryImages: updated });
-    if (success) {
-      setGalleryImages(updated);
-      setNewImage('');
-      setToastMessage('Image Added to Cloud Gallery');
-    } else {
-      setToastMessage('Failed to add image');
-    }
+    setGalleryImages(updated);
+    localStorage.setItem('wedding_gallery', JSON.stringify(updated));
+    setNewImage('');
+    setToastMessage('Image Added');
     setIsToastVisible(true);
   };
 
-  const processFile = async (file: File) => {
+  const processFile = (file: File) => {
     if (!file) return;
-    try {
-      setToastMessage('Uploading image to cloud...');
-      setIsToastVisible(true);
-      
-      const cloudUrl = await uploadFile(file);
-      const updated = [...galleryImages, cloudUrl];
-      
-      const success = await updateCloudSettings({ galleryImages: updated });
-      if (success) {
-        setGalleryImages(updated);
-        setToastMessage('Image Uploaded to Cloud!');
-      } else {
-        setToastMessage('Failed to sync gallery');
-      }
-      setIsToastVisible(true);
-    } catch (err) {
-      setToastMessage('Upload failed');
-      setIsToastVisible(true);
-    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const max_size = 800;
+
+        if (width > height) {
+          if (width > max_size) {
+            height *= max_size / width;
+            width = max_size;
+          }
+        } else {
+          if (height > max_size) {
+            width *= max_size / height;
+            height = max_size;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          const updated = [...galleryImages, dataUrl];
+          try {
+            localStorage.setItem('wedding_gallery', JSON.stringify(updated));
+            setGalleryImages(updated);
+            setToastMessage('Image Uploaded & Saved!');
+            setIsToastVisible(true);
+          } catch (err) {
+            setToastMessage('Storage Full! Remove some old images first.');
+            setIsToastVisible(true);
+          }
+        }
+      };
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const processAudioFile = async (file: File) => {
@@ -812,87 +769,43 @@ const AdminModal = ({
     }
 
     try {
-      setToastMessage('Uploading audio to cloud...');
+      setToastMessage('Processing audio...');
       setIsToastVisible(true);
 
-      const cloudUrl = await uploadFile(file);
-      const success = await updateCloudSettings({ songUrl: cloudUrl });
-      
-      if (success) {
-        setSongUrl(cloudUrl);
-        setNewSong(cloudUrl);
-        setToastMessage('Audio Uploaded & Saved to Cloud!');
-      } else {
-        setToastMessage('Failed to sync audio setting');
-      }
-      setIsToastVisible(true);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const audioData = e.target?.result as string;
+        await localforage.setItem('wedding_song_blob', audioData);
+        setSongUrl(audioData);
+        setNewSong('Local Uploaded File');
+        setToastMessage('Audio Uploaded & Saved!');
+        setIsToastVisible(true);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
-      setToastMessage('Error uploading audio file');
+      setToastMessage('Error saving audio file');
       setIsToastVisible(true);
     }
   };
 
-  const processDocumentFile = async (file: File) => {
-    if (!file) return;
-    try {
-      setToastMessage('Uploading document to cloud...');
-      setIsToastVisible(true);
-
-      const cloudUrl = await uploadFile(file);
-      const updated = [...documentUrls, cloudUrl];
-      const success = await updateCloudSettings({ documentUrls: updated });
-      
-      if (success) {
-        setDocumentUrls(updated);
-        setToastMessage('Document Uploaded to Cloud!');
-      } else {
-        setToastMessage('Failed to sync document');
-      }
-      setIsToastVisible(true);
-    } catch (err) {
-      setToastMessage('Error uploading document');
-      setIsToastVisible(true);
-    }
-  };
-
-  const removeDocument = async (index: number) => {
-    const updated = documentUrls.filter((_, i) => i !== index);
-    const success = await updateCloudSettings({ documentUrls: updated });
-    if (success) {
-      setDocumentUrls(updated);
-      setToastMessage('Document removed from cloud');
-      setIsToastVisible(true);
-    }
-  };
-
-  const removeImage = async (index: number) => {
+  const removeImage = (index: number) => {
     const updated = galleryImages.filter((_, i) => i !== index);
-    const success = await updateCloudSettings({ galleryImages: updated });
-    if (success) {
-      setGalleryImages(updated);
-    }
+    setGalleryImages(updated);
+    localStorage.setItem('wedding_gallery', JSON.stringify(updated));
   };
 
-  const clearGuestbook = async () => {
-    if (window.confirm('Are you sure you want to delete all messages from cloud?')) {
-      // This would need a backend route, but for now we'll just show the intent
-      setToastMessage('Clearing messages...');
+  const clearGuestbook = () => {
+    if (window.confirm('Are you sure you want to delete all messages?')) {
+      localStorage.setItem('guestbook_messages', JSON.stringify([]));
+      setGuestMessages([]);
+      setToastMessage('Guestbook Cleared');
       setIsToastVisible(true);
-      // Logic for clearing guestbook on server could be added to server.js
     }
   };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-purple-dark/90 backdrop-blur-sm">
       <div className="clay-card-gold text-purple-dark w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
-        {isUploading && (
-          <div className="absolute inset-0 z-[210] bg-white/50 backdrop-blur-sm flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-purple-deep border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="font-bold">Uploading to Cloud...</p>
-            </div>
-          </div>
-        )}
         <div className="flex justify-between items-center p-4 md:p-6 border-b border-accent-gold/20">
           <h2 className="text-xl md:text-2xl font-display font-bold flex items-center gap-2">
             <Lock size={20} /> Admin Access
@@ -944,7 +857,7 @@ const AdminModal = ({
                   />
                   <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
                   <p className="text-xs font-semibold text-purple-dark/80">Click to upload or drag & drop MP3</p>
-                  <p className="text-[10px] text-purple-dark/50">Stored in Cloudinary</p>
+                  <p className="text-[10px] text-purple-dark/50">Your personal wedding song</p>
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-purple-dark/30 font-bold justify-center py-1">
@@ -957,7 +870,7 @@ const AdminModal = ({
                   <input
                     type="url"
                     className="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-accent-gold/30 bg-white"
-                    value={newSong}
+                    value={newSong === 'Local Uploaded File' ? '' : newSong}
                     onChange={(e) => setNewSong(e.target.value)}
                     placeholder="https://...mp3"
                   />
@@ -1006,7 +919,7 @@ const AdminModal = ({
                   />
                   <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
                   <p className="text-xs font-semibold text-purple-dark/80">Click to upload or drag & drop</p>
-                  <p className="text-[10px] text-purple-dark/50">Stored in Cloudinary</p>
+                  <p className="text-[10px] text-purple-dark/50">Any image up to 5MB (auto-compressed)</p>
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-purple-dark/30 font-bold justify-center py-1">
@@ -1038,49 +951,20 @@ const AdminModal = ({
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-accent-gold/20 pt-4">
-                <label className="text-sm font-bold block">Other Documents (PDF, etc.)</label>
-                <div
-                  className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer hover:bg-accent-gold/5 transition-colors relative"
-                  onClick={() => document.getElementById('doc-upload')?.click()}
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file) processDocumentFile(file);
-                  }}
-                >
-                  <input
-                    type="file"
-                    id="doc-upload"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) processDocumentFile(file);
-                      if (e.target) e.target.value = '';
-                    }}
-                  />
-                  <FileText size={24} className="mx-auto text-purple-deep/40 mb-2" />
-                  <p className="text-xs font-semibold text-purple-dark/80">Click to upload documents</p>
-                  <p className="text-[10px] text-purple-dark/50">Stored in Cloudinary</p>
-                </div>
-
-                <div className="space-y-2 mt-4 max-h-40 overflow-y-auto pr-2 pb-2">
-                  {documentUrls.map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between bg-purple-light/10 p-2 rounded-lg border border-accent-gold/10">
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <FileText size={16} className="text-purple-deep/60 shrink-0" />
-                        <a href={doc} target="_blank" rel="noopener noreferrer" className="text-xs font-bold truncate hover:text-purple-deep transition-colors underline">
-                          {doc.split('/').pop()}
-                        </a>
-                      </div>
-                      <button onClick={() => removeDocument(i)} className="text-red-500 hover:text-red-700 p-1">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              <div className="border-t border-accent-gold/20 pt-4">
+                <button onClick={clearGuestbook} className="w-full py-3 bg-red-100 text-red-600 border border-red-200 rounded-lg text-sm font-bold flex justify-center items-center gap-2 mb-4">
+                  <Trash2 size={18} /> Clear Guestbook ({guestMessages.length})
+                </button>
+                <button onClick={() => {
+                  if (window.confirm('Are you sure you want to delete all RSVPs?')) {
+                    localStorage.setItem('wedding_rsvps', JSON.stringify([]));
+                    setRsvps([]);
+                    setToastMessage('RSVPs Cleared');
+                    setIsToastVisible(true);
+                  }
+                }} className="w-full py-3 bg-red-100/50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-sm font-bold flex justify-center items-center gap-2">
+                  <Trash2 size={18} /> Clear All RSVPs ({rsvps.length})
+                </button>
               </div>
 
               <div className="border-t border-accent-gold/20 pt-4 pb-2">
@@ -1093,8 +977,8 @@ const AdminModal = ({
                       <div key={i} className="bg-purple-light/20 p-3 rounded-lg border border-accent-gold/20 text-sm">
                         <div className="flex justify-between items-start font-bold">
                           <span>{rsvp.name} <span className="text-xs font-normal opacity-70">({rsvp.guests} guests)</span></span>
-                          <span className={(rsvp.attendance === 'yes' || rsvp.attending === true) ? 'text-green-600' : 'text-red-500'}>
-                            {(rsvp.attendance === 'yes' || rsvp.attending === true) ? 'Attending' : 'Declined'}
+                          <span className={rsvp.attendance === 'yes' ? 'text-green-600' : 'text-red-500'}>
+                            {rsvp.attendance === 'yes' ? 'Attending' : 'Declined'}
                           </span>
                         </div>
                         {rsvp.mobile && <div className="text-xs text-purple-dark/70 mt-1">{rsvp.mobile}</div>}
@@ -1143,7 +1027,6 @@ const AdminModal = ({
   );
 };
 
-
 // --- Main App Component ---
 export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -1164,7 +1047,6 @@ export default function App() {
 
   const [groomImage, setGroomImage] = useState('https://picsum.photos/seed/groom/400/400');
   const [brideImage, setBrideImage] = useState('https://picsum.photos/seed/bride/400/400');
-  const [documentUrls, setDocumentUrls] = useState<string[]>([]);
 
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
@@ -1172,34 +1054,25 @@ export default function App() {
 
   useEffect(() => {
     const loadSavedData = async () => {
-      try {
-        // Fetch settings from cloud
-        const settingsResponse = await fetch('/api/settings');
-        if (settingsResponse.ok) {
-          const settings = await settingsResponse.json();
-          if (settings.songUrl) setSongUrl(settings.songUrl);
-          if (settings.groomImage) setGroomImage(settings.groomImage);
-          if (settings.brideImage) setBrideImage(settings.brideImage);
-          if (settings.galleryImages && settings.galleryImages.length > 0) {
-            setGalleryImages(settings.galleryImages);
-          }
-          if (settings.documentUrls && settings.documentUrls.length > 0) {
-            setDocumentUrls(settings.documentUrls);
-          } else {
-            setGalleryImages([
-              'https://picsum.photos/seed/wedding-1/800/800',
-              'https://picsum.photos/seed/wedding-2/800/800',
-              'https://picsum.photos/seed/wedding-3/800/800',
-              'https://picsum.photos/seed/wedding-4/800/800',
-              'https://picsum.photos/seed/wedding-5/800/800',
-              'https://picsum.photos/seed/wedding-6/800/800',
-              'https://picsum.photos/seed/wedding-7/800/800',
-              'https://picsum.photos/seed/wedding-8/800/800'
-            ]);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to fetch cloud settings, falling back to defaults');
+      const savedSongBlob = await localforage.getItem('wedding_song_blob');
+      const savedSongUrl = localStorage.getItem('wedding_song');
+
+      if (savedSongBlob) {
+        setSongUrl(savedSongBlob as string);
+      } else if (savedSongUrl) {
+        setSongUrl(savedSongUrl);
+      }
+
+      const savedGroom = localStorage.getItem('wedding_groom_image');
+      if (savedGroom) setGroomImage(savedGroom);
+
+      const savedBride = localStorage.getItem('wedding_bride_image');
+      if (savedBride) setBrideImage(savedBride);
+
+      const savedImages = localStorage.getItem('wedding_gallery');
+      if (savedImages) {
+        setGalleryImages(JSON.parse(savedImages));
+      } else {
         setGalleryImages([
           'https://picsum.photos/seed/wedding-1/800/800',
           'https://picsum.photos/seed/wedding-2/800/800',
@@ -1236,10 +1109,9 @@ export default function App() {
 
   const fetchGuestMessages = async () => {
     try {
-      const response = await fetch('/api/guestbook');
-      if (response.ok) {
-        const messages = await response.json();
-        setGuestMessages(messages);
+      const savedMessages = localStorage.getItem('guestbook_messages');
+      if (savedMessages) {
+        setGuestMessages(JSON.parse(savedMessages));
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error);
@@ -1249,25 +1121,20 @@ export default function App() {
   const handleGuestBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/guestbook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: guestName, message: guestMessage }),
-      });
+      const newMessage = {
+        name: guestName,
+        message: guestMessage,
+        timestamp: new Date().toISOString()
+      };
+      const updatedMessages = [newMessage, ...guestMessages];
+      setGuestMessages(updatedMessages);
+      localStorage.setItem('guestbook_messages', JSON.stringify(updatedMessages));
 
-      if (response.ok) {
-        const newMessage = await response.json();
-        setGuestMessages(prev => [newMessage, ...prev]);
-        setGuestName('');
-        setGuestMessage('');
-        setToastMessage('Message posted! Thank you for your blessings.');
-        setIsToastVisible(true);
-      }
-    } catch (error) {
-      setToastMessage('Failed to post message. Please try again.');
+      setGuestName('');
+      setGuestMessage('');
+      setToastMessage('Message posted! Thank you for your blessings.');
       setIsToastVisible(true);
-    }
-  };
+    } catch (error) {
       console.error('Failed to post message:', error);
     }
   };
@@ -1393,7 +1260,7 @@ export default function App() {
               <div className="mb-16 relative incline-block">
                 {/* Glowing Wax Seal Container */}
                 <motion.div
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(212, 169, 100,0.6)" }}
+                  whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(212,175,55,0.6)" }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleOpenInvitation}
                   className="wax-seal w-48 h-48 md:w-64 md:h-64 flex flex-col items-center justify-center p-4 cursor-pointer z-20 mx-auto"
@@ -1485,8 +1352,6 @@ export default function App() {
         setGroomImage={setGroomImage}
         brideImage={brideImage}
         setBrideImage={setBrideImage}
-        documentUrls={documentUrls}
-        setDocumentUrls={setDocumentUrls}
       />
 
       {/* 1. HERO SECTION */}
@@ -1495,57 +1360,31 @@ export default function App() {
         <div className="hero-sky"></div>
         <div className="star-field"></div>
 
-        {/* 3D Spinning Ring Ornament — back layer */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1] opacity-20">
-          <div
-            style={{
-              width: '700px', height: '700px',
-              border: '1px solid rgba(212, 169, 100,0.6)',
-              borderRadius: '50%',
-              animation: 'spin3d-ring 18s linear infinite',
-            }}
-          />
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1] opacity-10">
-          <div
-            style={{
-              width: '500px', height: '500px',
-              border: '1px solid rgba(212, 169, 100,0.8)',
-              borderRadius: '50%',
-              animation: 'spin3d-ring 10s linear infinite reverse',
-            }}
-          />
-        </div>
-
         {/* Content Layer */}
         <motion.div
           style={{ opacity, scale }}
-          className="relative z-10 w-full max-w-4xl px-4 flex flex-col items-center mt-20 md:mt-32"
+          className="relative z-10 w-full max-w-4xl px-4 flex flex-col items-center"
         >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.5 }}
-            className="mb-6 md:mb-10 w-full flex flex-col items-center gap-3 px-4"
+            className="mb-8"
           >
-            {/* Top decorative line */}
-            <div className="h-[0.5px] w-16 sm:w-24 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-            <h3 className="text-gold-pale tracking-[0.15em] sm:tracking-[0.25em] md:tracking-[0.35em] uppercase text-[10px] sm:text-xs md:text-sm lg:text-base font-display font-bold text-shimmer text-center px-2 py-1 leading-relaxed">
+            <h3 className="text-gold-pale tracking-[0.5em] uppercase text-xs md:text-sm font-display font-bold text-shimmer">
               With the Blessings of our Families
             </h3>
-            {/* Bottom decorative line */}
-            <div className="h-[0.5px] w-16 sm:w-24 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
           </motion.div>
 
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative mb-12 depth-card"
+            className="relative mb-12"
           >
-            <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-display text-white leading-tight drop-shadow-[0_0_40px_rgba(212, 169, 100,0.5)]">
-              <span className="block mb-2" style={{ textShadow: '0 0 60px rgba(212, 169, 100,0.3), 0 4px 20px rgba(0,0,0,0.8)' }}>YOU ARE</span>
-              <span className="block italic font-serif text-gold-lt tracking-widest translate-y-[-10px]" style={{ textShadow: '0 0 40px rgba(229, 197, 145,0.6)' }}>INVITED</span>
+            <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-display text-white leading-tight drop-shadow-[0_0_20px_rgba(200,160,64,0.4)]">
+              <span className="block mb-2">YOU ARE</span>
+              <span className="block italic font-serif text-gold-lt tracking-widest translate-y-[-10px]">INVITED</span>
             </h1>
           </motion.div>
 
@@ -1556,19 +1395,8 @@ export default function App() {
             transition={{ delay: 1.5, duration: 2 }}
             className="flex flex-col items-center gap-2 mb-12"
           >
-            {/* Profile pictures restored */}
-            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-4">
-              <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-[2px] bg-gradient-to-tr from-gold to-burgundy shadow-[0_0_20px_rgba(212, 169, 100,0.3)] float-up-slow">
-                <img src={groomImage} alt="Karan" className="w-full h-full object-cover rounded-full border-4 border-night" />
-              </div>
-              <Heart className="text-gold-lt animate-pulse opacity-80" size={24} />
-               <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-[2px] bg-gradient-to-tr from-gold to-burgundy shadow-[0_0_20px_rgba(212, 169, 100,0.3)] float-up">
-                <img src={brideImage} alt="Nancy" className="w-full h-full object-cover rounded-full border-4 border-night" />
-              </div>
-            </div>
-
             <div className="h-[0.5px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
-            <p className="text-ivory-dk font-tamil text-xl md:text-2xl mt-4 opacity-80">கரண் மற்றும் நான்சி</p>
+            <p className="text-ivory-dk font-tamil text-xl md:text-2xl mt-4 opacity-80">கரன் & நேன்சி</p>
             <p className="text-gold-lt font-display text-2xl md:text-4xl tracking-[0.15em] mb-4">KARAN & NANCY</p>
             <div className="h-[0.5px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
           </motion.div>
@@ -1579,7 +1407,7 @@ export default function App() {
             transition={{ delay: 2.2, duration: 1 }}
             className="flex flex-col items-center gap-6"
           >
-            <div className="inline-flex items-center gap-4 px-8 py-3 bg-burgundy/40 backdrop-blur-sm border border-gold/30 rounded-full float-up">
+            <div className="inline-flex items-center gap-4 px-8 py-3 bg-burgundy/40 backdrop-blur-sm border border-gold/30 rounded-full">
               <Calendar size={18} className="text-gold" />
               <span className="text-ivory font-display tracking-widest text-lg">JUNE 07, 2026</span>
             </div>
@@ -1857,167 +1685,92 @@ export default function App() {
 
 
       {/* 3. WEDDING EVENTS */}
-      <section id="events" className="py-24 md:py-40 px-4 bg-night relative overflow-hidden min-h-screen">
-        <div className="star-field opacity-30"></div>
+      <section id="events" className="py-24 md:py-40 px-4 bg-night relative overflow-hidden">
+        <div className="star-field opacity-20"></div>
         <div className="brocade-bg opacity-10"></div>
-
-        {/* Floating stars decoration */}
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-gold pointer-events-none"
-            style={{
-              left: `${[8, 15, 25, 35, 60, 70, 80, 88, 92, 20, 50, 75][i]}%`,
-              top: `${[10, 25, 15, 60, 8, 70, 20, 45, 80, 85, 90, 55][i]}%`,
-              fontSize: `${[16, 12, 20, 14, 18, 10, 22, 16, 12, 18, 14, 10][i]}px`,
-            }}
-            animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8], rotate: [0, 180, 360] }}
-            transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            ✦
-          </motion.div>
-        ))}
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          {/* Header */}
+        <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-20"
+            className="text-center mb-24"
           >
-            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-white italic mb-4">
+            <p className="text-gold tracking-[0.5em] uppercase text-[10px] md:text-xs font-bold mb-4">The Celebration</p>
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-white italic">
               Wedding Events
             </h2>
-            <p className="text-gold tracking-[0.4em] uppercase text-[10px] md:text-xs font-bold">
-              Click on each event to view details
-            </p>
-            <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-50"></div>
+            <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-8 opacity-40"></div>
           </motion.div>
 
-          {/* Timeline */}
-          <div className="relative">
-            {/* Central vertical line */}
-            <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-gold/40 to-transparent -translate-x-1/2"></div>
-
-            <div className="flex flex-col gap-24 md:gap-32">
-              {[
-                {
-                  id: 1,
-                  title: "The Nuptial Mass",
-                  date: "June 7, 2026",
-                  time: "06:00 AM Onwards",
-                  venue: "Our Lady of Fatima Shrine",
-                  address: "Krishnagiri",
-                  emoji: "🕊️",
-                  iconEl: <Church size={22} />,
-                  quote: '"A sacred union blessed by the divine, where two souls become one in faith."',
-                  directions: "https://maps.app.goo.gl/RibXynCFDWEhEFsp9",
-                  side: "right",
-                },
-                {
-                  id: 2,
-                  title: "Holy Muhurtham",
-                  date: "June 7, 2026",
-                  time: "09:00 AM Onwards",
-                  venue: "Jose Palace",
-                  address: "Rayappa Mudali Street, PTV Colony, Krishnagiri",
-                  emoji: "🔥",
-                  iconEl: <Flame size={22} />,
-                  quote: '"Traditions that bind us to our roots and rituals that celebrate eternal love."',
-                  directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A",
-                  side: "left",
-                },
-                {
-                  id: 3,
-                  title: "Grand Reception",
-                  date: "June 7, 2026",
-                  time: "12:30 PM Onwards",
-                  venue: "Jose Palace",
-                  address: "Rayappa Mudali Street, PTV Colony, Krishnagiri",
-                  emoji: "🥂",
-                  iconEl: <Music size={22} />,
-                  quote: '"An evening of joy, laughter, and celebration as we begin our new journey."',
-                  directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A",
-                  side: "right",
-                },
-              ].map((event, idx) => {
-                const isLeft = event.side === 'left';
-                return (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-80px' }}
-                    transition={{ duration: 0.8, delay: idx * 0.1 }}
-                    className="relative flex flex-col md:flex-row items-center gap-8 md:gap-0"
+          <div className="flex flex-col gap-12">
+            {[
+              {
+                id: 1,
+                title: "The Nuptial Mass",
+                date: "JUNE 7, 2026",
+                time: "06:00 AM",
+                venue: "Our Lady of Fatima Shrine",
+                location: "Krishnagiri",
+                icon: <Church size={28} />,
+                bg: "bg-navy/30",
+                directions: "https://maps.app.goo.gl/RibXynCFDWEhEFsp9"
+              },
+              {
+                id: 2,
+                title: "Holy Muhurtham",
+                date: "JUNE 7, 2026",
+                time: "09:00 AM",
+                venue: "Jose Palace",
+                location: "Krishnagiri",
+                icon: <Flame size={28} />,
+                bg: "bg-maroon-dk/30",
+                directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A"
+              },
+              {
+                id: 3,
+                title: "Grand Reception",
+                date: "JUNE 7, 2026",
+                time: "12:30 PM",
+                venue: "Jose Palace",
+                location: "Krishnagiri",
+                icon: <Music size={28} />,
+                bg: "bg-burgundy/30",
+                directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A"
+              }
+            ].map((event) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className={`flex flex-col md:flex-row gap-8 p-8 ${event.bg} backdrop-blur-md rounded-3xl border border-gold/10 hover:border-gold/30 transition-all group`}
+              >
+                <div className="flex-shrink-0 w-16 h-16 bg-gold/10 rounded-2xl flex items-center justify-center text-gold border border-gold/20 glow-sm">
+                  {event.icon}
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-2xl md:text-3xl font-display text-white mb-2 group-hover:text-gold-lt transition-colors">{event.title}</h3>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-ivory/60 font-body text-sm mb-4">
+                    <div className="flex items-center gap-2"><Calendar size={14} /> {event.date}</div>
+                    <div className="flex items-center gap-2"><Clock size={14} /> {event.time}</div>
+                  </div>
+                  <p className="text-gold-pale/80 font-display text-base mb-1">{event.venue}</p>
+                  <p className="text-ivory/40 text-xs tracking-widest uppercase mb-6">{event.location}</p>
+                </div>
+                <div className="flex items-center">
+                  <motion.a
+                    href={event.directions}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-4 bg-gold/10 text-gold rounded-full border border-gold/20 hover:bg-gold/20 transition-all"
                   >
-                    {/* ── EVENT DETAILS ── */}
-                    <div className={`w-full md:w-[42%] ${isLeft ? 'md:order-3 md:pl-16 text-center md:text-left' : 'md:order-1 md:pr-16 text-center md:text-right'}`}>
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <h3 className={`text-2xl sm:text-3xl md:text-4xl font-display text-gold-lt italic mb-4 leading-tight`}>
-                          {event.title}
-                        </h3>
-                        <div className={`flex flex-col md:flex-row gap-2 mb-4 justify-center ${isLeft ? 'md:justify-start' : 'md:justify-end'}`}>
-                          <div className="flex items-center justify-center gap-2 text-ivory/70 text-sm">
-                            <Calendar size={13} className="text-gold/60 shrink-0" />
-                            <span>{event.date}</span>
-                          </div>
-                          <div className="hidden md:block text-gold/40">•</div>
-                          <div className="flex items-center justify-center gap-2 text-ivory/70 text-sm">
-                            <Clock size={13} className="text-gold/60 shrink-0" />
-                            <span>{event.time}</span>
-                          </div>
-                        </div>
-                        <p className="text-gold font-display text-sm tracking-widest uppercase mb-1">{event.venue}</p>
-                        <p className="text-ivory/40 text-xs tracking-wider">{event.address}</p>
-                      </motion.div>
-                    </div>
-
-                    {/* ── CENTRAL TIMELINE NODE ── */}
-                    <div className="md:order-2 flex flex-col items-center z-10 shrink-0">
-                      <motion.a
-                        href={event.directions}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.15, boxShadow: '0 0 30px rgba(212, 169, 100,0.5)' }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-14 h-14 rounded-full border-2 border-gold/50 bg-night flex items-center justify-center text-gold shadow-[0_0_20px_rgba(212, 169, 100,0.2)] cursor-pointer transition-all"
-                        title="Get Directions"
-                      >
-                        {event.iconEl}
-                      </motion.a>
-                    </div>
-
-                    {/* ── QUOTE CARD ── */}
-                    <div className={`w-full md:w-[42%] ${isLeft ? 'md:order-1 md:pr-16' : 'md:order-3 md:pl-16'}`}>
-                      <motion.div
-                        whileHover={{ scale: 1.02, y: -4 }}
-                        transition={{ duration: 0.3 }}
-                        className="p-6 md:p-8 rounded-3xl bg-maroon-dk/40 backdrop-blur-md border border-gold/10 hover:border-gold/20 transition-all shadow-xl card-3d holo-card text-center md:text-left"
-                      >
-                        <div className="text-3xl mb-4 flex justify-center md:justify-start">{event.emoji}</div>
-                        <p className="text-ivory/80 font-serif italic text-base md:text-lg leading-relaxed mb-4">
-                          {event.quote}
-                        </p>
-                        <motion.a
-                          href={event.directions}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ x: 4 }}
-                          className="flex items-center justify-center md:justify-start gap-1 text-gold text-xs tracking-[0.2em] uppercase font-bold hover:text-gold-lt transition-colors"
-                        >
-                          View Details <span className="text-base">›</span>
-                        </motion.a>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                    <MapPin size={24} />
+                  </motion.a>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -2101,7 +1854,7 @@ export default function App() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsRSVPOpen(true)}
-            className="px-16 py-6 bg-gold text-night font-bold tracking-[0.2em] text-xl rounded-full shadow-[0_0_30px_rgba(212, 169, 100,0.3)] hover:shadow-[0_0_50px_rgba(212, 169, 100,0.5)] transition-all uppercase"
+            className="px-16 py-6 bg-gold text-night font-bold tracking-[0.2em] text-xl rounded-full shadow-[0_0_30px_rgba(200,160,64,0.3)] hover:shadow-[0_0_50px_rgba(200,160,64,0.5)] transition-all uppercase"
           >
             RSVP NOW
           </motion.button>
