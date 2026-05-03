@@ -772,7 +772,6 @@ const AdminModal = ({
       groomName,
       brideName,
       weddingDate,
-      weddingDate,
       weddingVenue,
       coverImage
     });
