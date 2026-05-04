@@ -1,0 +1,517 @@
+﻿
+> // --- Admin Modal Component ---
+  const AdminModal = ({
+    isOpen,
+    onClose,
+    songUrl,
+    setSongUrl,
+    galleryImages,
+    setGalleryImages,
+    setToastMessage,
+    setIsToastVisible,
+    guestMessages,
+    setGuestMessages,
+    groomImage,
+    setGroomImage,
+    brideImage,
+    setBrideImage,
+    documentUrls,
+    setDocumentUrls,
+    groomName,
+    setGroomName,
+    brideName,
+    setBrideName,
+    weddingDate,
+    setWeddingDate,
+    weddingVenue,
+    setWeddingVenue,
+    coverImage,
+    setCoverImage
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    songUrl: string;
+    setSongUrl: (url: string) => void;
+    galleryImages: string[];
+    setGalleryImages: (imgs: string[]) => void;
+    setToastMessage: (msg: string) => void;
+    setIsToastVisible: (v: boolean) => void;
+    guestMessages: any[];
+    setGuestMessages: (msgs: any[]) => void;
+    groomImage: string;
+    setGroomImage: (img: string) => void;
+    brideImage: string;
+    setBrideImage: (img: string) => void;
+    documentUrls: string[];
+    setDocumentUrls: (docs: string[]) => void;
+    groomName: string;
+    setGroomName: (n: string) => void;
+    brideName: string;
+    setBrideName: (n: string) => void;
+    weddingDate: string;
+    setWeddingDate: (d: string) => void;
+    weddingVenue: string;
+    setWeddingVenue: (v: string) => void;
+    coverImage: string;
+    setCoverImage: (img: string) => void;
+  }) => {
+    const [pin, setPin] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [newImage, setNewImage] = useState('');
+    const [newSong, setNewSong] = useState(songUrl);
+    const [rsvps, setRsvps] = useState<any[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+  
+    // Crop states
+    const [cropModalOpen, setCropModalOpen] = useState(false);
+    const [cropTarget, setCropTarget] = useState<'groom' | 'bride'>('groom');
+    const [cropImageRaw, setCropImageRaw] = useState('');
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  
+    const uploadFile = async (file: File): Promise<string> => {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) throw new Error('Upload failed');
+        const data = await response.json();
+        return data.url;
+      } finally {
+        setIsUploading(false);
+      }
+    };
+  
+    const base64ToBlob = (base64: string) => {
+      const byteString = atob(base64.split(',')[1]);
+      const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      return new Blob([ab], { type: mimeString });
+    };
+  
+    const updateCloudSettings = async (updates: any) => {
+      try {
+        const response = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        return response.ok;
+      } catch (e) {
+        console.error('Failed to update cloud settings:', e);
+        return false;
+      }
+    };
+  
+    const initCrop = (type: 'groom' | 'bride') => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: any) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            setCropImageRaw(ev.target?.result as string);
+            setCropTarget(type);
+            setCropModalOpen(true);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    };
+  
+    const finalizeCrop = async () => {
+      try {
+        const croppedImgBase64 = await getCroppedImg(cropImageRaw, croppedAreaPixels);
+        const blob = base64ToBlob(croppedImgBase64);
+        const file = new File([blob], `profile_${cropTarget}.jpg`, { type: 'image/jpeg' });
+        
+        const cloudUrl = await uploadFile(file);
+        
+        if (cropTarget === 'groom') {
+          await updateCloudSettings({ groomImage: cloudUrl });
+          setGroomImage(cloudUrl);
+        } else {
+          await updateCloudSettings({ brideImage: cloudUrl });
+          setBrideImage(cloudUrl);
+        }
+        
+        setToastMessage('Profile photo updated in cloud!');
+        setIsToastVisible(true);
+        setCropModalOpen(false);
+      } catch (e) {
+        setToastMessage('Upload failed. Check Cloudinary settings.');
+        setIsToastVisible(true);
+        setCropModalOpen(false);
+      }
+    };
+  
+    useEffect(() => {
+      if (isAuthenticated) {
+        const fetchAdminData = async () => {
+          try {
+            const response = await fetch('/api/rsvps');
+            if (response.ok) {
+              const serverRsvps = await response.json();
+              setRsvps(serverRsvps);
+            }
+          } catch (e) {
+            console.error('Failed to fetch RSVPs');
+          }
+        };
+        fetchAdminData();
+      }
+    }, [isAuthenticated]);
+  
+    if (!isOpen) return null;
+  
+    const handleLogin = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (pin === 'KN2026') {
+        setIsAuthenticated(true);
+        setToastMessage('Access Granted');
+        setIsToastVisible(true);
+      } else {
+        setToastMessage('Incorrect Password');
+        setIsToastVisible(true);
+      }
+    };
+  
+    const saveConfig = async () => {
+      const success = await updateCloudSettings({ 
+        songUrl: newSong,
+        groomName,
+        brideName,
+        weddingDate,
+        weddingVenue,
+        coverImage
+      });
+      if (success) {
+        setSongUrl(newSong);
+        setToastMessage('Settings Saved to Cloud!');
+      } else {
+        setToastMessage('Failed to save settings');
+      }
+      setIsToastVisible(true);
+    };
+  
+    const clearRSVPs = async () => {
+      if (window.confirm('Clear all RSVPs? This cannot be undone.')) {
+        try {
+          const res = await fetch('/api/rsvps', { method: 'DELETE' });
+          if (res.ok) {
+            setRsvps([]);
+            setToastMessage('RSVPs cleared');
+            setIsToastVisible(true);
+          }
+        } catch (e) {
+          setToastMessage('Failed to clear RSVPs');
+          setIsToastVisible(true);
+        }
+      }
+    };
+  
+    const clearGuestbook = async () => {
+      if (window.confirm('Clear all blessings? This cannot be undone.')) {
+        try {
+          const res = await fetch('/api/guestbook', { method: 'DELETE' });
+          if (res.ok) {
+            setGuestMessages([]);
+            setToastMessage('Blessings cleared');
+            setIsToastVisible(true);
+          }
+        } catch (e) {
+          setToastMessage('Failed to clear blessings');
+          setIsToastVisible(true);
+        }
+      }
+    };
+  
+    const addImage = async () => {
+      if (!newImage) return;
+      const updated = [...galleryImages, newImage];
+      const success = await updateCloudSettings({ galleryImages: updated });
+      if (success) {
+        setGalleryImages(updated);
+        setNewImage('');
+        setToastMessage('Image Added to Cloud Gallery');
+      } else {
+        setToastMessage('Failed to add image');
+      }
+      setIsToastVisible(true);
+    };
+  
+    const processFile = async (file: File) => {
+      if (!file) return;
+      try {
+        setToastMessage('Uploading image to cloud...');
+        setIsToastVisible(true);
+        
+        const cloudUrl = await uploadFile(file);
+        const updated = [...galleryImages, cloudUrl];
+        
+        const success = await updateCloudSettings({ galleryImages: updated });
+        if (success) {
+          setGalleryImages(updated);
+          setToastMessage('Image Uploaded to Cloud!');
+        } else {
+          setToastMessage('Failed to sync gallery');
+        }
+        setIsToastVisible(true);
+      } catch (err) {
+        setToastMessage('Upload failed');
+        setIsToastVisible(true);
+      }
+    };
+  
+    const processAudioFile = async (file: File) => {
+      if (!file) return;
+      if (!file.type.startsWith('audio/')) {
+        setToastMessage('Please upload an audio file');
+        setIsToastVisible(true);
+        return;
+      }
+  
+      try {
+        setToastMessage('Uploading audio to cloud...');
+        setIsToastVisible(true);
+  
+        const cloudUrl = await uploadFile(file);
+        const success = await updateCloudSettings({ songUrl: cloudUrl });
+        
+        if (success) {
+          setSongUrl(cloudUrl);
+          setNewSong(cloudUrl);
+          setToastMessage('Audio Uploaded & Saved to Cloud!');
+        } else {
+          setToastMessage('Failed to sync audio setting');
+        }
+        setIsToastVisible(true);
+      } catch (err) {
+        setToastMessage('Error uploading audio file');
+        setIsToastVisible(true);
+      }
+    };
+  
+    const processDocumentFile = async (file: File) => {
+      if (!file) return;
+      try {
+        setToastMessage('Uploading document to cloud...');
+        setIsToastVisible(true);
+  
+        const cloudUrl = await uploadFile(file);
+        const updated = [...documentUrls, cloudUrl];
+        const success = await updateCloudSettings({ documentUrls: updated });
+        
+        if (success) {
+          setDocumentUrls(updated);
+          setToastMessage('Document Uploaded to Cloud!');
+        } else {
+          setToastMessage('Failed to sync document');
+        }
+        setIsToastVisible(true);
+      } catch (err) {
+        setToastMessage('Error uploading document');
+        setIsToastVisible(true);
+      }
+    };
+  
+    const removeDocument = async (index: number) => {
+      const updated = documentUrls.filter((_, i) => i !== index);
+      const success = await updateCloudSettings({ documentUrls: updated });
+      if (success) {
+        setDocumentUrls(updated);
+        setToastMessage('Document removed from cloud');
+        setIsToastVisible(true);
+      }
+    };
+  
+    const removeImage = async (index: number) => {
+      const updated = galleryImages.filter((_, i) => i !== index);
+      const success = await updateCloudSettings({ galleryImages: updated });
+      if (success) {
+        setGalleryImages(updated);
+      }
+    };
+  
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-purple-dark/90 backdrop-blur-sm">
+        <div className="clay-card-gold text-purple-dark w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl 
+overflow-hidden relative">
+          {isUploading && (
+            <div className="absolute inset-0 z-[210] bg-white/50 backdrop-blur-sm flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-purple-deep border-t-transparent rounded-full animate-spin 
+mx-auto mb-2"></div>
+                <p className="font-bold">Uploading to Cloud...</p>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-between items-center p-4 md:p-6 border-b border-accent-gold/20">
+            <h2 className="text-xl md:text-2xl font-display font-bold flex items-center gap-2">
+              <Lock size={20} /> Admin Access
+            </h2>
+            <button onClick={onClose} className="text-purple-light hover:text-purple-deep">
+              <XCircle size={24} />
+            </button>
+          </div>
+  
+          <div className="p-4 md:p-6 overflow-y-auto w-full">
+            {!isAuthenticated ? (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <p className="text-sm font-semibold">Enter Password</p>
+                <input
+                  type="password"
+                  className="w-full px-4 py-3 rounded-xl bg-cream-gold border-2 border-accent-light/50 
+focus:border-accent-gold outline-none"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  placeholder="********"
+                />
+                <button className="w-full clay-button bg-purple-deep text-cream-gold py-3 font-bold">Login</button>
+              </form>
+            ) : (
+              <div className="space-y-6 w-full">
+                <div className="space-y-3 bg-purple-light/5 p-4 rounded-xl border border-accent-gold/10">
+                  <label className="text-xs font-bold uppercase tracking-widest text-purple-deep">General Info</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold block mb-1">Groom Name</label>
+                      <input type="text" value={groomName} onChange={(e) => setGroomName(e.target.value)} 
+className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold block mb-1">Bride Name</label>
+                      <input type="text" value={brideName} onChange={(e) => setBrideName(e.target.value)} 
+className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold block mb-1">Wedding Date & Time</label>
+                    <input type="datetime-local" value={weddingDate.substring(0, 16)} onChange={(e) => 
+setWeddingDate(e.target.value)} className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold block mb-1">Wedding Venue</label>
+                    <input type="text" value={weddingVenue} onChange={(e) => setWeddingVenue(e.target.value)} 
+className="w-full px-2 py-1.5 text-sm rounded border bg-white" />
+                  </div>
+                  <button onClick={saveConfig} className="w-full bg-purple-deep text-cream-gold py-2 rounded-lg 
+text-xs font-bold mt-2 hover:bg-purple-light transition-all">Save General Settings</button>
+                </div>
+  
+                <div className="space-y-3 bg-purple-light/5 p-4 rounded-xl border border-accent-gold/10">
+                  <label className="text-xs font-bold uppercase tracking-widest text-purple-deep">Welcome Cover 
+Image</label>
+                  <div
+                    className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer 
+hover:bg-accent-gold/5 transition-colors relative"
+                    onClick={() => document.getElementById('cover-upload')?.click()}
+                  >
+                    <input
+                      type="file"
+                      id="cover-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setToastMessage('Uploading cover image...');
+                          setIsToastVisible(true);
+                          const url = await uploadFile(file);
+                          const success = await updateCloudSettings({ coverImage: url });
+                          if (success) {
+                            setCoverImage(url);
+                            setToastMessage('Cover image updated in cloud!');
+                          }
+                        }
+                        if (e.target) e.target.value = '';
+                      }}
+                    />
+                    <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
+                    <p className="text-xs font-semibold">Upload Welcome Background</p>
+                  </div>
+                  {coverImage && (
+                    <div className="relative aspect-video rounded-md overflow-hidden mt-2 border 
+border-accent-gold/30">
+                      <img src={coverImage} className="w-full h-full object-cover" />
+                      <button 
+                        onClick={async () => {
+                          const success = await updateCloudSettings({ coverImage: '' });
+                          if (success) setCoverImage('');
+                        }} 
+                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+  
+                <div className="space-y-3">
+                  <label className="text-sm font-bold block">Background Music (.mp3)</label>
+  
+                  <div
+                    className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer 
+hover:bg-accent-gold/5 transition-colors relative"
+                    onClick={() => document.getElementById('audio-upload')?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) processAudioFile(file);
+                    }}
+                  >
+                    <input
+                      type="file"
+                      id="audio-upload"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) processAudioFile(file);
+                        if (e.target) e.target.value = '';
+                      }}
+                    />
+                    <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
+                    <p className="text-xs font-semibold text-purple-dark/80">Click to upload or drag & drop MP3</p>
+                    <p className="text-[10px] text-purple-dark/50">Stored in Cloudinary</p>
+                  </div>
+  
+                  <div className="flex items-center gap-2 text-xs text-purple-dark/30 font-bold justify-center py-1">
+                    <div className="h-[1px] bg-accent-gold/20 flex-1"></div>
+                    OR URL
+                    <div className="h-[1px] bg-accent-gold/20 flex-1"></div>
+                  </div>
+  
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="url"
+                      className="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-accent-gold/30 bg-white"
+                      value={newSong}
+                      onChange={(e) => setNewSong(e.target.value)}
+                      placeholder="https://...mp3"
+                    />
+                    <button onClick={saveConfig} className="bg-purple-deep text-cream-gold px-4 py-2 rounded-lg 
+text-sm font-bold w-full sm:w-auto">Save URL</button>
+                  </div>
+                </div>
+  
+                <div className="space-y-3 border-t border-accent-gold/20 pt-4">
+                  <label className="text-sm font-bold block">Profile Photos (Hero Section)</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center bg-purple-light/10 p-3 rounded-lg border border-accent-gold/20">
+
+

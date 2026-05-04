@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 import { Lock, XCircle, Plus, UploadCloud, Trash2, FileText, CheckCircle2, Heart } from 'lucide-react';
 // --- Crop Helper ---
@@ -92,6 +92,11 @@ const AdminModal = ({
   const [newSong, setNewSong] = useState(songUrl);
   const [rsvps, setRsvps] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [cloudStatus, setCloudStatus] = useState<any>(null);
+  const [editingBlessingId, setEditingBlessingId] = useState<string | null>(null);
+  const [editingBlessingName, setEditingBlessingName] = useState('');
+  const [editingBlessingMsg, setEditingBlessingMsg] = useState('');
 
   // Crop states
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -421,7 +426,7 @@ const AdminModal = ({
         headers: { 'X-Admin-Pin': pin },
       });
       if (res.ok) {
-        setGuestMessages(prev => prev.filter((m: any) => m._id !== id));
+        setGuestMessages(guestMessages.filter((m: any) => m._id !== id));
         setToastMessage('Blessing deleted');
         setIsToastVisible(true);
       }
@@ -448,7 +453,7 @@ const AdminModal = ({
       });
       if (res.ok) {
         const updated = await res.json();
-        setGuestMessages(prev => prev.map((m: any) => m._id === editingBlessingId ? updated : m));
+        setGuestMessages(guestMessages.map((m: any) => m._id === editingBlessingId ? updated : m));
         setEditingBlessingId(null);
         setToastMessage('Blessing updated');
         setIsToastVisible(true);
