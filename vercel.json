@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "vite build --root client",
-  "outputDirectory": "client/dist",
   "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "client/dist"
+      }
+    },
     {
       "src": "server/api/index.js",
       "use": "@vercel/node"
