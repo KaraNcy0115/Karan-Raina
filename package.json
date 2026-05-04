@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node server/index.js",
-    "build": "vite build --root client",
-    "preview": "vite preview --root client",
+    "build": "vite build client",
+    "preview": "vite preview client",
     "clean": "rm -rf client/dist",
     "lint": "tsc -p client/tsconfig.json --noEmit",
     "start": "node server/index.js"
