@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node server/index.js",
-    "build": "vite build client",
-    "preview": "vite preview client",
+    "build": "vite build --root client",
+    "preview": "vite preview --root client",
     "clean": "rm -rf client/dist",
     "lint": "tsc -p client/tsconfig.json --noEmit",
     "start": "node server/index.js"
@@ -17,7 +17,7 @@
     "@types/canvas-confetti": "^1.9.0",
     "@vitejs/plugin-react": "^5.0.4",
     "canvas-confetti": "^1.9.4",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.10.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "localforage": "^1.10.0",
@@ -25,7 +25,7 @@
     "mongoose": "^9.4.1",
     "motion": "^12.23.24",
     "multer": "^2.1.1",
-    "multer-storage-cloudinary": "^4.0.0",
+    "multer-storage-cloudinary-v2": "^1.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-easy-crop": "^5.5.7",

@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
@@ -42,7 +41,8 @@ async function startServer() {
 
   // Vite/Static Setup
   if (!isProduction && process.env.VERCEL !== "1") {
-    // Development Mode
+    // Development Mode — dynamically import Vite so it is never loaded in production
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
