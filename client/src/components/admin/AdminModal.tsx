@@ -113,6 +113,7 @@ const AdminModal = ({
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
+        headers: { 'X-Admin-Pin': pin },
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
@@ -138,7 +139,7 @@ const AdminModal = ({
     try {
       const response = await fetch('/api/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
         body: JSON.stringify(updates),
       });
       return response.ok;
