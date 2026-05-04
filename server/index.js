@@ -26,18 +26,33 @@ async function startServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-  // MongoDB Connection
-  const MONGODB_URI = process.env.MONGODB_URI;
-  if (MONGODB_URI) {
-    mongoose.connect(MONGODB_URI)
-      .then(() => console.log("Connected to MongoDB"))
-      .catch(err => console.error("MongoDB connection error:", err));
-  } else {
-    console.warn("MONGODB_URI not found.");
-  }
+  // MongoDB Connection Middleware
+  let isConnected = false;
+  const connectToDatabase = async () => {
+    if (isConnected || mongoose.connection.readyState === 1) {
+      isConnected = true;
+      return;
+    }
+    const MONGODB_URI = process.env.MONGODB_URI;
+    if (!MONGODB_URI) {
+      console.warn("MONGODB_URI not found.");
+      return;
+    }
+    try {
+      await mongoose.connect(MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000 // fail fast if unable to connect
+      });
+      isConnected = true;
+      console.log("Connected to MongoDB");
+    } catch (err) {
+      console.error("MongoDB connection error:", err);
+    }
+  };
 
-  // Use API Routes
-  app.use("/api", apiRoutes);
+  app.use("/api", async (req, res, next) => {
+    await connectToDatabase();
+    next();
+  }, apiRoutes);
 
   // Vite/Static Setup
   if (!isProduction && process.env.VERCEL !== "1") {
