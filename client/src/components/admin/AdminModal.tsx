@@ -699,50 +699,7 @@ const AdminModal = ({
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-accent-gold/20 pt-4">
-                <label className="text-sm font-bold block">Other Documents (PDF, etc.)</label>
-                <div
-                  className="border-2 border-dashed border-accent-gold/50 rounded-lg p-4 text-center cursor-pointer hover:bg-accent-gold/5 transition-colors relative"
-                  onClick={() => document.getElementById('doc-upload')?.click()}
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file) processDocumentFile(file);
-                  }}
-                >
-                  <input
-                    type="file"
-                    id="doc-upload"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) processDocumentFile(file);
-                      if (e.target) e.target.value = '';
-                    }}
-                  />
-                  <FileText size={24} className="mx-auto text-purple-deep/40 mb-2" />
-                  <p className="text-xs font-semibold text-purple-dark/80">Click to upload documents</p>
-                  <p className="text-[10px] text-purple-dark/50">Stored in Cloudinary</p>
-                </div>
 
-                <div className="space-y-2 mt-4 max-h-40 overflow-y-auto pr-2 pb-2">
-                  {documentUrls.map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between bg-purple-light/10 p-2 rounded-lg border border-accent-gold/10">
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <FileText size={16} className="text-purple-deep/60 shrink-0" />
-                        <a href={doc} target="_blank" rel="noopener noreferrer" className="text-xs font-bold truncate hover:text-purple-deep transition-colors underline">
-                          {doc.split('/').pop()}
-                        </a>
-                      </div>
-                      <button onClick={() => removeDocument(i)} className="text-red-500 hover:text-red-700 p-1">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               <div className="border-t border-accent-gold/20 pt-4 pb-2">
                 <div className="flex justify-between items-center mb-3">
