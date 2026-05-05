@@ -278,7 +278,15 @@ router.post(
     }
     next();
   },
-  upload.single("file"),
+  (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+      if (err) {
+        console.error("Cloudinary Upload Error:", err);
+        return res.status(500).json({ error: err.message || "Upload failed due to cloud storage error." });
+      }
+      next();
+    });
+  },
   (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: "No file uploaded" });

@@ -116,7 +116,16 @@ const AdminModal = ({
         headers: { 'X-Admin-Pin': pin },
         body: formData,
       });
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+        let errMessage = 'Upload failed';
+        try {
+          const data = await response.json();
+          if (data.error) errMessage = data.error;
+        } catch (e) {
+          // fallback to generic message if parsing fails
+        }
+        throw new Error(errMessage);
+      }
       const data = await response.json();
       return data.url;
     } finally {
@@ -188,7 +197,7 @@ const AdminModal = ({
       setIsToastVisible(true);
       setCropModalOpen(false);
     } catch (e) {
-      setToastMessage('Upload failed. Check Cloudinary settings.');
+      setToastMessage(e instanceof Error ? e.message : 'Upload failed. Check Cloudinary settings.');
       setIsToastVisible(true);
       setCropModalOpen(false);
     }
@@ -324,7 +333,7 @@ const AdminModal = ({
       }
       setIsToastVisible(true);
     } catch (err) {
-      setToastMessage('Upload failed');
+      setToastMessage(err instanceof Error ? err.message : 'Upload failed');
       setIsToastVisible(true);
     }
   };
@@ -353,7 +362,7 @@ const AdminModal = ({
       }
       setIsToastVisible(true);
     } catch (err) {
-      setToastMessage('Error uploading audio file');
+      setToastMessage(err instanceof Error ? err.message : 'Error uploading audio file');
       setIsToastVisible(true);
     }
   };
@@ -376,7 +385,7 @@ const AdminModal = ({
       }
       setIsToastVisible(true);
     } catch (err) {
-      setToastMessage('Error uploading document');
+      setToastMessage(err instanceof Error ? err.message : 'Error uploading document');
       setIsToastVisible(true);
     }
   };
