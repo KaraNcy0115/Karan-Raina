@@ -196,28 +196,16 @@ router.delete("/guestbook", requireAdminAuth, async (req, res) => {
 
 // ─── Settings API ─────────────────────────────────────────────────────────────
 
+const SETTINGS_ID = "000000000000000000000001"; // Fixed ID for singleton settings
+
 // GET settings — public (site needs to load config)
 router.get("/settings", async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({
-        songUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        groomImage: "https://picsum.photos/seed/groom/400/400",
-        brideImage: "https://picsum.photos/seed/bride/400/400",
-        groomName: "KARAN",
-        brideName: "NANCY",
-        weddingDate: "2026-06-07T06:00:00",
-        weddingVenue: "KRISHNAGIRI",
-        galleryImages: [],
-        documentUrls: [],
-        coverImage: "",
-      });
-    }
-    let settings = await Settings.findOne();
-    if (!settings) {
-      settings = new Settings();
-      await settings.save();
-    }
+    const settings = await Settings.findOneAndUpdate(
+      { _id: SETTINGS_ID }, 
+      { $setOnInsert: { _id: SETTINGS_ID, groomName: "KARAN", brideName: "NANCY" } }, 
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
     res.json(settings);
   } catch (error) {
     console.error("Settings GET error:", error);
@@ -228,30 +216,16 @@ router.get("/settings", async (req, res) => {
 // POST/update settings — admin only
 router.post("/settings", requireAdminAuth, async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1)
-      return res.status(503).json({ error: "Database not connected. Settings not saved." });
-
-    const {
-      songUrl, groomImage, brideImage, groomName, brideName,
-      weddingDate, weddingVenue, galleryImages, documentUrls, coverImage,
-    } = req.body;
-
-    let settings = await Settings.findOne();
-    if (!settings) settings = new Settings();
-
-    if (songUrl !== undefined) settings.songUrl = songUrl;
-    if (groomImage !== undefined) settings.groomImage = groomImage;
-    if (brideImage !== undefined) settings.brideImage = brideImage;
-    if (groomName !== undefined) settings.groomName = groomName;
-    if (brideName !== undefined) settings.brideName = brideName;
-    if (weddingDate !== undefined) settings.weddingDate = weddingDate;
-    if (weddingVenue !== undefined) settings.weddingVenue = weddingVenue;
-    if (galleryImages !== undefined) settings.galleryImages = galleryImages;
-    if (documentUrls !== undefined) settings.documentUrls = documentUrls;
-    if (coverImage !== undefined) settings.coverImage = coverImage;
-    settings.updatedAt = Date.now();
-
-    await settings.save();
+    const updates = req.body;
+    delete updates._id;
+    delete updates.__v;
+    
+    const settings = await Settings.findOneAndUpdate(
+      { _id: SETTINGS_ID },
+      { $set: { ...updates, updatedAt: Date.now() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    
     res.json(settings);
   } catch (error) {
     console.error("Settings POST error:", error);

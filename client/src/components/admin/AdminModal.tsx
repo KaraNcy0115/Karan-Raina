@@ -182,18 +182,20 @@ const AdminModal = ({
       const croppedImgBase64 = await getCroppedImg(cropImageRaw, croppedAreaPixels);
       const blob = base64ToBlob(croppedImgBase64);
       const file = new File([blob], `profile_${cropTarget}.jpg`, { type: 'image/jpeg' });
-      
+
       const cloudUrl = await uploadFile(file);
       
-      if (cropTarget === 'groom') {
-        await updateCloudSettings({ groomImage: cloudUrl });
-        setGroomImage(cloudUrl);
+      const success = await updateCloudSettings(
+        cropTarget === 'groom' ? { groomImage: cloudUrl } : { brideImage: cloudUrl }
+      );
+
+      if (success) {
+        if (cropTarget === 'groom') setGroomImage(cloudUrl);
+        else setBrideImage(cloudUrl);
+        setToastMessage('Profile photo updated in cloud!');
       } else {
-        await updateCloudSettings({ brideImage: cloudUrl });
-        setBrideImage(cloudUrl);
+        throw new Error('Photo uploaded but failed to save to database.');
       }
-      
-      setToastMessage('Profile photo updated in cloud!');
       setIsToastVisible(true);
       setCropModalOpen(false);
     } catch (e) {
@@ -252,7 +254,7 @@ const AdminModal = ({
   };
 
   const saveConfig = async () => {
-    const success = await updateCloudSettings({ 
+    const success = await updateCloudSettings({
       songUrl: newSong,
       groomName,
       brideName,
@@ -320,10 +322,10 @@ const AdminModal = ({
     try {
       setToastMessage('Uploading image to cloud...');
       setIsToastVisible(true);
-      
+
       const cloudUrl = await uploadFile(file);
       const updated = [...galleryImages, cloudUrl];
-      
+
       const success = await updateCloudSettings({ galleryImages: updated });
       if (success) {
         setGalleryImages(updated);
@@ -352,7 +354,7 @@ const AdminModal = ({
 
       const cloudUrl = await uploadFile(file);
       const success = await updateCloudSettings({ songUrl: cloudUrl });
-      
+
       if (success) {
         setSongUrl(cloudUrl);
         setNewSong(cloudUrl);
@@ -376,7 +378,7 @@ const AdminModal = ({
       const cloudUrl = await uploadFile(file);
       const updated = [...documentUrls, cloudUrl];
       const success = await updateCloudSettings({ documentUrls: updated });
-      
+
       if (success) {
         setDocumentUrls(updated);
         setToastMessage('Document Uploaded to Cloud!');
@@ -559,7 +561,7 @@ const AdminModal = ({
                             setCoverImage(url);
                             setToastMessage('Cover image updated in cloud!');
                           } else {
-                            setToastMessage('Failed to save cover image');
+                            throw new Error('Cover image uploaded but failed to sync.');
                           }
                         } catch {
                           setToastMessage('Cover image upload failed');
@@ -574,11 +576,11 @@ const AdminModal = ({
                 {coverImage && (
                   <div className="relative aspect-video rounded-md overflow-hidden mt-2 border border-accent-gold/30">
                     <img src={coverImage} className="w-full h-full object-cover" />
-                    <button 
+                    <button
                       onClick={async () => {
                         const success = await updateCloudSettings({ coverImage: '' });
                         if (success) setCoverImage('');
-                      }} 
+                      }}
                       className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full"
                     >
                       <Trash2 size={12} />

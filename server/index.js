@@ -29,10 +29,20 @@ async function startServer() {
   // MongoDB Connection Middleware
   let isConnected = false;
   const connectToDatabase = async () => {
-    if (isConnected || mongoose.connection.readyState === 1) {
-      isConnected = true;
-      return;
+    if (mongoose.connection.readyState === 1) return;
+    
+    // If connecting, wait for it
+    if (mongoose.connection.readyState === 2) {
+      return new Promise((resolve, reject) => {
+        const check = () => {
+          if (mongoose.connection.readyState === 1) resolve();
+          else if (mongoose.connection.readyState === 0) reject(new Error("DB connection failed"));
+          else setTimeout(check, 100);
+        };
+        check();
+      });
     }
+
     const MONGODB_URI = process.env.MONGODB_URI;
     if (!MONGODB_URI) {
       console.warn("MONGODB_URI not found.");
@@ -40,18 +50,22 @@ async function startServer() {
     }
     try {
       await mongoose.connect(MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000 // fail fast if unable to connect
+        serverSelectionTimeoutMS: 10000
       });
-      isConnected = true;
       console.log("Connected to MongoDB");
     } catch (err) {
       console.error("MongoDB connection error:", err);
+      throw err; // Propagate error to middleware
     }
   };
 
   app.use("/api", async (req, res, next) => {
-    await connectToDatabase();
-    next();
+    try {
+      await connectToDatabase();
+      next();
+    } catch (err) {
+      res.status(503).json({ error: "Database connection failed" });
+    }
   }, apiRoutes);
 
   // Vite/Static Setup
