@@ -209,6 +209,11 @@ const AdminModal = ({
     input.onchange = (e: any) => {
       const file = e.target.files?.[0];
       if (file) {
+        if (file.size > 4 * 1024 * 1024) {
+          setToastMessage('Profile image must be under 4MB');
+          setIsToastVisible(true);
+          return;
+        }
         const reader = new FileReader();
         reader.onload = (ev) => {
           setCropImageRaw(ev.target?.result as string);
@@ -367,6 +372,15 @@ const processFiles = async (files: File[]) => {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
+    
+    // 4MB limit for images
+    if (file.size > 4 * 1024 * 1024) {
+      setToastMessage(`Skipped ${file.name} — must be under 4MB`);
+      setIsToastVisible(true);
+      failed++;
+      continue;
+    }
+
     try {
       setToastMessage(`Uploading ${i + 1} of ${total} image${total > 1 ? 's' : ''}...`);
       setIsToastVisible(true);
@@ -407,6 +421,13 @@ const processAudioFile = async (file: File) => {
     setIsToastVisible(true);
     return;
   }
+  
+  // 10MB limit for audio
+  if (file.size > 10 * 1024 * 1024) {
+    setToastMessage('Audio file must be under 10MB');
+    setIsToastVisible(true);
+    return;
+  }
 
   try {
     setToastMessage('Uploading audio to cloud...');
@@ -431,6 +452,14 @@ const processAudioFile = async (file: File) => {
 
 const processDocumentFile = async (file: File) => {
   if (!file) return;
+  
+  // 10MB limit for documents
+  if (file.size > 10 * 1024 * 1024) {
+    setToastMessage('Document must be under 10MB');
+    setIsToastVisible(true);
+    return;
+  }
+
   try {
     setToastMessage('Uploading document to cloud...');
     setIsToastVisible(true);
@@ -612,6 +641,11 @@ return (
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      if (file.size > 4 * 1024 * 1024) {
+                        setToastMessage('Cover image must be under 4MB');
+                        setIsToastVisible(true);
+                        return;
+                      }
                       setToastMessage('Uploading cover image...');
                       setIsToastVisible(true);
                       try {
