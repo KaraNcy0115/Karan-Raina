@@ -388,7 +388,12 @@ const processFiles = async (files: File[]) => {
       uploadedUrls.push(cloudUrl);
     } catch (err) {
       failed++;
-      console.error(`Failed to upload file ${file.name}:`, err);
+      const errMsg = err instanceof Error ? err.message : 'Upload failed';
+      console.error(`Failed to upload file ${file.name}:`, errMsg);
+      // Show error immediately so user knows what went wrong
+      setToastMessage(`❌ ${errMsg}`);
+      setIsToastVisible(true);
+      await new Promise(r => setTimeout(r, 2500)); // let them read the error
     }
   }
 
@@ -584,6 +589,18 @@ return (
           <XCircle size={24} />
         </button>
       </div>
+
+      {/* ── Cloud Status Bar ── */}
+      {cloudStatus && (
+        <div className="flex gap-2 px-4 py-2 border-b border-accent-gold/20 text-xs font-semibold flex-wrap">
+          <span className={`px-2 py-1 rounded-full flex items-center gap-1 ${cloudStatus.cloudinary ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {cloudStatus.cloudinary ? '🟢' : '🔴'} Cloudinary {cloudStatus.cloudinary ? 'Ready' : 'NOT Configured!'}
+          </span>
+          <span className={`px-2 py-1 rounded-full flex items-center gap-1 ${cloudStatus.database ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {cloudStatus.database ? '🟢' : '🔴'} Database {cloudStatus.database ? 'Connected' : 'Disconnected!'}
+          </span>
+        </div>
+      )}
 
       <div className="p-4 md:p-6 overflow-y-auto w-full">
         {!isAuthenticated ? (
