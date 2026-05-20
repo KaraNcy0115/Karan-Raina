@@ -315,28 +315,46 @@ const addImage = async () => {
   setIsToastVisible(true);
 };
 
-const processFile = async (file: File) => {
-  if (!file) return;
-  try {
-    setToastMessage('Uploading image to cloud...');
-    setIsToastVisible(true);
+const processFiles = async (files: File[]) => {
+  if (!files || files.length === 0) return;
+  const total = files.length;
+  let uploadedUrls: string[] = [];
+  let failed = 0;
 
-    const cloudUrl = await uploadFile(file);
-    const updated = [...galleryImages, cloudUrl];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      setToastMessage(`Uploading ${i + 1} of ${total} image${total > 1 ? 's' : ''}...`);
+      setIsToastVisible(true);
+      const cloudUrl = await uploadFile(file);
+      uploadedUrls.push(cloudUrl);
+    } catch (err) {
+      failed++;
+      console.error(`Failed to upload file ${file.name}:`, err);
+    }
+  }
 
+  if (uploadedUrls.length > 0) {
+    const updated = [...galleryImages, ...uploadedUrls];
     const success = await updateCloudSettings({ galleryImages: updated });
     if (success) {
       setGalleryImages(updated);
-      setToastMessage('Image Uploaded to Cloud!');
+      if (failed > 0) {
+        setToastMessage(`${uploadedUrls.length} uploaded, ${failed} failed.`);
+      } else {
+        setToastMessage(`${uploadedUrls.length} image${uploadedUrls.length > 1 ? 's' : ''} uploaded to Cloud! ✓`);
+      }
     } else {
-      setToastMessage('Failed to sync gallery');
+      setToastMessage('Uploaded but failed to sync gallery');
     }
-    setIsToastVisible(true);
-  } catch (err) {
-    setToastMessage(err instanceof Error ? err.message : 'Upload failed');
-    setIsToastVisible(true);
+  } else {
+    setToastMessage('All uploads failed. Please try again.');
   }
+  setIsToastVisible(true);
 };
+
+// Keep single-file wrapper for backward compatibility
+const processFile = async (file: File) => processFiles([file]);
 
 const processAudioFile = async (file: File) => {
   if (!file) return;
@@ -659,24 +677,25 @@ return (
                 onDrop={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  const file = e.dataTransfer.files?.[0];
-                  if (file) processFile(file);
+                  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                  if (files.length > 0) processFiles(files);
                 }}
               >
                 <input
                   type="file"
                   id="gallery-upload"
                   accept="image/*"
+                  multiple
                   className="hidden"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) processFile(file);
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) processFiles(files);
                     if (e.target) e.target.value = '';
                   }}
                 />
                 <UploadCloud size={24} className="mx-auto text-purple-deep/40 mb-2" />
                 <p className="text-xs font-semibold text-purple-dark/80">Click to upload or drag & drop</p>
-                <p className="text-[10px] text-purple-dark/50">Stored in Cloudinary</p>
+                <p className="text-[10px] text-purple-dark/50">Select multiple images at once • Stored in Cloudinary</p>
               </div>
 
               <div className="flex items-center gap-2 text-xs text-purple-dark/30 font-bold justify-center py-1">
