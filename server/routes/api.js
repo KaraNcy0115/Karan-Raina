@@ -2,7 +2,6 @@ import express from "express";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary-v2";
 import RSVP from "../models/RSVP.js";
 import GuestBook from "../models/GuestBook.js";
 import Settings from "../models/Settings.js";
@@ -20,16 +19,26 @@ const requireAdminAuth = (req, res, next) => {
   next();
 };
 
-// ─── Multer / Cloudinary Storage ──────────────────────────────────────────────
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => ({
-    folder: "wedding_fusion",
-    resource_type: "auto",
-  }),
+// ─── Multer Memory Storage (buffer → direct Cloudinary stream) ────────────────
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 });
 
-const upload = multer({ storage });
+// Helper: upload buffer to Cloudinary via stream
+const uploadToCloudinary = (buffer, mimetype) => {
+  return new Promise((resolve, reject) => {
+    const resourceType = mimetype.startsWith("audio/") ? "video" : "auto";
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "wedding_fusion", resource_type: resourceType },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+};
 
 // ─── Auth Endpoints ───────────────────────────────────────────────────────────
 
@@ -173,7 +182,7 @@ router.put("/guestbook/:id", requireAdminAuth, async (req, res) => {
     const updated = await GuestBook.findByIdAndUpdate(
       req.params.id,
       { name, message },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
     if (!updated) return res.status(404).json({ error: "Message not found" });
     res.json(updated);
@@ -199,7 +208,6 @@ router.delete("/guestbook", requireAdminAuth, async (req, res) => {
 // GET settings — public (site needs to load config)
 router.get("/settings", async (req, res) => {
   try {
-    // Use upsert to ensure a document always exists and get it in one op
     const settings = await Settings.findOneAndUpdate(
       {},
       { $setOnInsert: { groomName: "KARAN", brideName: "NANCY" } },
@@ -216,7 +224,6 @@ router.get("/settings", async (req, res) => {
 router.post("/settings", requireAdminAuth, async (req, res) => {
   try {
     const updates = req.body;
-    // Remove protected fields
     delete updates._id;
     delete updates.__v;
 
@@ -233,7 +240,7 @@ router.post("/settings", requireAdminAuth, async (req, res) => {
   }
 });
 
-// ─── File Upload API — admin only, stores in Cloudinary ──────────────────────
+// ─── File Upload API — admin only, uploads directly to Cloudinary ──────────────
 router.post(
   "/upload",
   requireAdminAuth,
@@ -246,30 +253,21 @@ router.post(
       CLOUDINARY_CLOUD_NAME === "your_cloud_name_here"
     ) {
       return res.status(503).json({
-        error:
-          "Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to your .env file.",
+        error: "Cloudinary is not configured. Add credentials to your .env file.",
       });
     }
     next();
   },
-  (req, res, next) => {
-    upload.single("file")(req, res, (err) => {
-      if (err) {
-        console.error("Cloudinary Upload Error:", err);
-        return res.status(500).json({ error: err.message || "Upload failed due to cloud storage error." });
-      }
-      next();
-    });
-  },
-  (req, res) => {
+  upload.single("file"),
+  async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-      const cloudUrl = req.file.path || req.file.secure_url;
-      if (!cloudUrl)
-        return res.status(500).json({ error: "Upload succeeded but no URL returned from Cloudinary" });
+
+      const cloudUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+      console.log("✅ Uploaded to Cloudinary:", cloudUrl);
       res.json({ url: cloudUrl });
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("❌ Cloudinary upload error:", error);
       res.status(500).json({ error: "Upload failed: " + (error.message || "Unknown error") });
     }
   }
