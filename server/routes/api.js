@@ -203,7 +203,7 @@ router.get("/settings", async (req, res) => {
     const settings = await Settings.findOneAndUpdate(
       {},
       { $setOnInsert: { groomName: "KARAN", brideName: "NANCY" } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
     res.json(settings);
   } catch (error) {
@@ -223,7 +223,7 @@ router.post("/settings", requireAdminAuth, async (req, res) => {
     const settings = await Settings.findOneAndUpdate(
       {},
       { $set: { ...updates, updatedAt: Date.now() } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
     res.json(settings);
