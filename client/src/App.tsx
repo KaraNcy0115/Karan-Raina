@@ -458,6 +458,7 @@ export default function App() {
                 <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#events" className="transition-colors shrink-0">Events</motion.a>
                 <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#blessings" className="transition-colors shrink-0">Blessings</motion.a>
                 <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#rsvp" className="transition-colors shrink-0">RSVP</motion.a>
+                <motion.a whileHover={{ scale: 1.1, color: "var(--color-accent-gold)" }} href="#contact" className="transition-colors shrink-0">Contact</motion.a>
               </div>
             </div>
           </motion.nav>
@@ -914,6 +915,19 @@ export default function App() {
               {[
                 {
                   id: 1,
+                  title: "Holy Muhurtham",
+                  date: "June 7, 2026",
+                  time: "06:00 AM Onwards",
+                  venue: "Arulmigu Sri Ponmalai Srinivasa Perumal Temple",
+                  address: "near Sri Kattu Veera Anjaneyar Temple, Devasamudiram, Krishnagiri",
+                  emoji: "🔥",
+                  iconEl: <Flame size={22} />,
+                  quote: '"Traditions that bind us to our roots and rituals that celebrate eternal love."',
+                  directions: "https://maps.app.goo.gl/xTARmcsFSqamATdC9",
+                  side: "right",
+                },
+                {
+                  id: 2,
                   title: "The Nuptial Mass",
                   date: "June 7, 2026",
                   time: "06:00 AM Onwards",
@@ -923,32 +937,19 @@ export default function App() {
                   iconEl: <Church size={22} />,
                   quote: '"A sacred union blessed by the divine, where two souls become one in faith."',
                   directions: "https://maps.app.goo.gl/RibXynCFDWEhEFsp9",
-                  side: "right",
-                },
-                {
-                  id: 2,
-                  title: "Holy Muhurtham",
-                  date: "June 7, 2026",
-                  time: "09:00 AM Onwards",
-                  venue: "Jose Palace",
-                  address: "Rayappa Mudali Street, PTV Colony, Krishnagiri",
-                  emoji: "🔥",
-                  iconEl: <Flame size={22} />,
-                  quote: '"Traditions that bind us to our roots and rituals that celebrate eternal love."',
-                  directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A",
                   side: "left",
                 },
                 {
                   id: 3,
                   title: "Grand Reception",
                   date: "June 7, 2026",
-                  time: "12:30 PM Onwards",
-                  venue: "Jose Palace",
-                  address: "Rayappa Mudali Street, PTV Colony, Krishnagiri",
+                  time: "11:30 AM Onwards",
+                  venue: "Sri Subramani Mahal",
+                  address: "Old Pet, Opp. to Old Bus Stand, Krishnagiri",
                   emoji: "🥂",
                   iconEl: <Music size={22} />,
-                  quote: '"An evening of joy, laughter, and celebration as we begin our new journey."',
-                  directions: "https://maps.app.goo.gl/TaA3bzYo7vN69G36A",
+                  quote: '"Where music fills the air, hearts overflow with love, and every moment becomes a memory worth keeping forever."',
+                  directions: "https://maps.app.goo.gl/bpsCkFpABeLP3z1j7",
                   side: "right",
                 },
               ].map((event, idx) => {
@@ -1068,7 +1069,7 @@ export default function App() {
           >
             <div className="w-full h-[400px] md:h-[500px] bg-gray-900 rounded-3xl overflow-hidden border border-gold/20 shadow-2xl">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.685338168233!2d80.2206453148229!3d13.0556816908007!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a52665977777777%3A0x7777777777777777!2sOur%20Lady%20of%20Fatima%20Church!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin"
+                src="https://maps.google.com/maps?q=Sri+Subramani+Mahal,Old+Pet,Krishnagiri,Tamil+Nadu&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0, filter: 'grayscale(1) invert(0.9) contrast(1.2)' }}
@@ -1082,7 +1083,134 @@ export default function App() {
       </section>
 
 
-      {/* 5. RSVP CTA */}
+      {/* 5. CONTACT SECTION */}
+      <section id="contact" className="py-24 md:py-40 px-4 bg-deep relative overflow-hidden">
+        <div className="star-field opacity-20"></div>
+        <div className="brocade-bg opacity-10"></div>
+
+        <div className="max-w-5xl mx-auto relative z-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <p className="text-gold tracking-[0.4em] uppercase text-[10px] md:text-xs font-bold mb-4">Reach Out</p>
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-white italic mb-4">Contact Us</h2>
+            <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto opacity-50"></div>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-10">
+
+            {/* Groom Side */}
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="p-8 rounded-3xl bg-maroon-dk/40 backdrop-blur-md border border-gold/20 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
+                  <span className="text-gold text-lg">🌸</span>
+                </div>
+                <div>
+                  <p className="text-gold tracking-[0.3em] uppercase text-[10px] font-bold">Groom's Side</p>
+                  <div className="h-[1px] w-20 bg-gold/30 mt-1"></div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { name: "Karan", phone: "7904336561" },
+                  { name: "Venkatesan", phone: "8148715933" },
+                  { name: "Sharmila", phone: "8438554439" },
+                  { name: "Sharmila (Alt)", phone: "9629159685" },
+                ].map((c, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-night/50 border border-gold/10 hover:border-gold/30 transition-all group"
+                  >
+                    <div>
+                      <p className="text-ivory font-display tracking-wider text-base">{c.name}</p>
+                      <p className="text-gold/70 text-sm font-mono mt-0.5">{c.phone}</p>
+                    </div>
+                    <motion.a
+                      href={`tel:${c.phone}`}
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all shadow-md"
+                      title={`Call ${c.name}`}
+                    >
+                      <Phone size={16} />
+                    </motion.a>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Bride Side */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="p-8 rounded-3xl bg-navy/40 backdrop-blur-md border border-gold/20 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
+                  <span className="text-gold text-lg">✝️</span>
+                </div>
+                <div>
+                  <p className="text-gold tracking-[0.3em] uppercase text-[10px] font-bold">Bride's Side</p>
+                  <div className="h-[1px] w-20 bg-gold/30 mt-1"></div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { name: "George", phone: "6380110681" },
+                  { name: "Kumudha", phone: "9047612102" },
+                  { name: "Michael Raj", phone: "8807638118" },
+                  { name: "Abinesh Mariyan", phone: "9384580482" },
+                ].map((c, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-night/50 border border-gold/10 hover:border-gold/30 transition-all group"
+                  >
+                    <div>
+                      <p className="text-ivory font-display tracking-wider text-base">{c.name}</p>
+                      <p className="text-gold/70 text-sm font-mono mt-0.5">{c.phone}</p>
+                    </div>
+                    <motion.a
+                      href={`tel:${c.phone}`}
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all shadow-md"
+                      title={`Call ${c.name}`}
+                    >
+                      <Phone size={16} />
+                    </motion.a>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+
+      {/* 6. RSVP CTA */}
       <section id="rsvp" className="bg-night text-ivory py-40 px-4 text-center relative overflow-hidden">
         <div className="star-field opacity-30"></div>
         <div className="brocade-bg opacity-10"></div>

@@ -196,14 +196,13 @@ router.delete("/guestbook", requireAdminAuth, async (req, res) => {
 
 // ─── Settings API ─────────────────────────────────────────────────────────────
 
-const SETTINGS_ID = "000000000000000000000001"; // Fixed ID for singleton settings
-
 // GET settings — public (site needs to load config)
 router.get("/settings", async (req, res) => {
   try {
+    // Use upsert to ensure a document always exists and get it in one op
     const settings = await Settings.findOneAndUpdate(
-      { _id: SETTINGS_ID }, 
-      { $setOnInsert: { _id: SETTINGS_ID, groomName: "KARAN", brideName: "NANCY" } }, 
+      {},
+      { $setOnInsert: { groomName: "KARAN", brideName: "NANCY" } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     res.json(settings);
@@ -217,15 +216,16 @@ router.get("/settings", async (req, res) => {
 router.post("/settings", requireAdminAuth, async (req, res) => {
   try {
     const updates = req.body;
+    // Remove protected fields
     delete updates._id;
     delete updates.__v;
-    
+
     const settings = await Settings.findOneAndUpdate(
-      { _id: SETTINGS_ID },
+      {},
       { $set: { ...updates, updatedAt: Date.now() } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
-    
+
     res.json(settings);
   } catch (error) {
     console.error("Settings POST error:", error);
