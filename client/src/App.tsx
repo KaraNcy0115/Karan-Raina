@@ -928,7 +928,7 @@ export default function App() {
                 },
                 {
                   id: 2,
-                  title: "The Nuptial Mass",
+                  title: "Holy Matrimony",
                   date: "June 7, 2026",
                   time: "06:00 AM Onwards",
                   venue: "Our Lady of Fatima Shrine",
