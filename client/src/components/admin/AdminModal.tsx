@@ -751,13 +751,42 @@ return (
             <div className="space-y-3 border-t border-accent-gold/20 pt-4">
               <label className="text-sm font-bold block">Profile Photos (Hero Section)</label>
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center bg-purple-light/10 p-3 rounded-lg border border-accent-gold/20">
-                  <img src={groomImage} className="w-16 h-16 rounded-full mx-auto object-cover mb-2 border-2 border-accent-gold" />
-                  <button onClick={() => initCrop('groom')} className="text-xs bg-purple-deep hover:bg-purple-light text-cream-gold px-3 py-2 rounded-lg w-full font-bold transition-colors">Edit Groom</button>
+                <div className="text-center bg-purple-light/10 p-4 rounded-lg border border-accent-gold/20">
+                  {groomImage ? (
+                    <img src={groomImage} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full mx-auto object-cover mb-4 border-4 border-accent-gold shadow-md" />
+                  ) : (
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full mx-auto mb-4 border-4 border-accent-gold border-dashed flex items-center justify-center bg-purple-dark/5 text-purple-deep">No Photo</div>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <button onClick={() => initCrop('groom')} className="text-xs bg-purple-deep hover:bg-purple-light text-cream-gold px-3 py-2 rounded-lg w-full font-bold transition-colors">Change Photo</button>
+                    {groomImage && (
+                      <button onClick={async () => {
+                        if (window.confirm('Delete Groom profile photo?')) {
+                          const success = await updateCloudSettings({ groomImage: '' });
+                          if (success) setGroomImage('');
+                        }
+                      }} className="text-xs bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-2 rounded-lg w-full font-bold transition-colors">Remove</button>
+                    )}
+                  </div>
                 </div>
-                <div className="text-center bg-purple-light/10 p-3 rounded-lg border border-accent-gold/20">
-                  <img src={brideImage} className="w-16 h-16 rounded-full mx-auto object-cover mb-2 border-2 border-accent-gold" />
-                  <button onClick={() => initCrop('bride')} className="text-xs bg-purple-deep hover:bg-purple-light text-cream-gold px-3 py-2 rounded-lg w-full font-bold transition-colors">Edit Bride</button>
+
+                <div className="text-center bg-purple-light/10 p-4 rounded-lg border border-accent-gold/20">
+                  {brideImage ? (
+                    <img src={brideImage} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full mx-auto object-cover mb-4 border-4 border-accent-gold shadow-md" />
+                  ) : (
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full mx-auto mb-4 border-4 border-accent-gold border-dashed flex items-center justify-center bg-purple-dark/5 text-purple-deep">No Photo</div>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <button onClick={() => initCrop('bride')} className="text-xs bg-purple-deep hover:bg-purple-light text-cream-gold px-3 py-2 rounded-lg w-full font-bold transition-colors">Change Photo</button>
+                    {brideImage && (
+                      <button onClick={async () => {
+                        if (window.confirm('Delete Bride profile photo?')) {
+                          const success = await updateCloudSettings({ brideImage: '' });
+                          if (success) setBrideImage('');
+                        }
+                      }} className="text-xs bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-2 rounded-lg w-full font-bold transition-colors">Remove</button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
