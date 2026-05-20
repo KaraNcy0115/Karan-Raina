@@ -930,7 +930,7 @@ export default function App() {
                   id: 2,
                   title: "Holy Matrimony",
                   date: "June 7, 2026",
-                  time: "06:00 AM Onwards",
+                  time: "09:30 AM Onwards",
                   venue: "Our Lady of Fatima Shrine",
                   address: "Krishnagiri",
                   emoji: "🕊️",
